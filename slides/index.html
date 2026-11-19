@@ -4,49 +4,56 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Building Home Screen Widgets in Flutter Without Writing Native Code Twice — Akansha Jain</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&family=Figtree:wght@400;500;600;700&family=Google+Sans+Code:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="assets/fonts/fonts.css" rel="stylesheet">
 <script src="deck-stage.js"></script>
 
-<script type="application/json" id="speaker-notes">
-[
- "Hi everyone, I'm Akansha. (Under 30 seconds.) Today we'll build these two home screen widgets, for iOS and Android, without writing a single line of Swift or Kotlin. And I'll tell you what broke along the way.",
- "Quick show of hands: how many of you have a Flutter app with a home screen widget? (Pause.) Not many. There's a reason for that, and it changed this autumn.",
+<script type="application/json" id="speaker-notes">[
+ "Hi everyone, I'm Akansha. (Under 30 seconds.) Today we'll build these two home screen widgets, for iOS and Android, without writing a single line of Swift or Kotlin for these two widgets. And I'll tell you what broke along the way.",
+ "Quick show of hands: how many of you have a Flutter app with a home screen widget? (Pause.) Not many. There's a reason for that, and it changed in September.",
  "Think about your own home screen. The weather, your steps, a calendar. You see them every time you unlock your phone, without opening anything. A streak that's about to break is a nudge to open the app again. And tapping a widget takes you straight to the right screen.",
  "This is the one sentence I'll keep coming back to. A widget is not a Flutter screen. Flutter draws your app's screens, but only while your app is running. The home screen belongs to the phone. On iOS, widgets are written in SwiftUI with WidgetKit; on Android, with Jetpack Glance. Flutter can't draw there, and your app usually isn't even running.",
- "So for one widget, you wrote it twice. Look at the small grey word 'TODAY' at the top of this widget. Here it is in SwiftUI, and here is the same word in Kotlin for Android. That's one label. Now imagine the whole widget, twice, and every bug fixed twice.",
+ "Until now, here's what that meant. Look at the small grey word TODAY at the top of this widget. Here it is in SwiftUI for iOS, and here is the same word in Kotlin for Android. Different languages, and they don't even look alike. That's one label.",
  "(Let the meme land. Don't explain it.)",
  "And that's only the UI. On iOS you add a widget extension in Xcode, an App Group so the app and the widget can share data, and entitlements. On Android a receiver class, entries in the manifest, an XML file describing the widget, and Gradle setup.",
- "So adding a widget to a Flutter app meant starting a small native project inside it: two languages, two UIs to keep in sync, and setup on both platforms. That's a lot for one small card on the home screen.",
+ "So here's the problem. Every time you change the widget, say you want to show the streak, you make that change twice: once in SwiftUI in Xcode, once in Glance in Kotlin, and you test both. And neither of them is Dart, the language your team writes every day. That's a lot for one small card on the home screen.",
  "So what if you could describe the widget once, in Dart, and let a tool write the native code? That's what's new.",
- "Three packages, all by Anton Borries. home_widget has been around for years: your app uses it to save data for the widget, ask for a redraw, and know when the widget was tapped. The other two are new, released in September: the generator gives you building blocks to describe the widget in Dart, and the CLI turns that description into Swift and Kotlin. Both are before 1.0, so expect breaking changes.",
+ "Three packages, all by Anton Borries. home_widget has been around for years: your app uses it to save data for the widget, ask for a redraw, and know when the widget was tapped. It's the only one that ships in your app, so it goes under dependencies. The other two are new, released in September: the generator gives you building blocks to describe the widget in Dart, and the CLI turns that description into Swift and Kotlin. Those two only run while you build, so they're dev dependencies. Both are before 1.0, so expect breaking changes.",
  "To show you how it works, I built a small app called Stride. You set a daily step goal, and every day you reach it, your streak grows. It has two widgets: a wide one with the details, and a small one with just the streak. Steps are added with a button here; a real app would read them from Health Connect or HealthKit, and the widget wouldn't change. I'll use Stride for every example from now on.",
  "This is Stride's wide widget, described in Dart. It looks like Flutter, but it's a description, not a widget tree that runs. The building blocks are a smaller set than Flutter's, because each one has to exist in SwiftUI and in Glance. And notice the data: steps, blocks, message and mascot are named slots that the app fills in later.",
  "Then one command. It reads every widget description in the home_widget folder and writes the SwiftUI code, the Glance code and a typed Dart helper, and it sets up Xcode and the Android manifest. For Stride's two widgets: about 300 lines of Dart in, over 800 lines of Swift and almost 800 lines of Kotlin out. A small tip: the command in the CLI's README didn't work for me; this one, from Anton's codelab, does.",
  "So here's the before and after. Before: two UIs, two languages, setup on both platforms, and keeping them in sync forever. Now: one Dart file, one command, and a change in one place.",
  "Why generate native code and not something else? You could keep writing native code yourself: full control, double the work. home_widget can also take a Flutter widget and save it as an image for the home screen. That reuses your Flutter UI, but the widget only shows a picture. Generating gives you a real native widget from one description; the trade-off is a smaller set of building blocks.",
- "Now, how does the app talk to the widget? It doesn't, directly. They're two programs sharing a small storage space. On iOS that's an App Group, on Android SharedPreferences. home_widget hides the difference, so your Dart code is the same on both.",
+ "Now, how does the app talk to the widget? It doesn't, directly. They're two programs sharing a small storage space. On iOS that's an App Group, on Android SharedPreferences. home_widget hides the difference, so your Dart code is the same on both. Pictures, like Dash, are saved as files in that same shared space.",
  "Updating the widget is two steps. First, save what the widget should show. The helper is generated from the description, so a typo in a field name is a compile error, not a blank widget. Second, ask the phone to redraw it. And that's a request, not an order: Apple says a widget people look at often typically gets 40 to 70 refreshes a day, and Android's own scheduled updates can't run more often than every 30 minutes.",
  "The other direction: tapping the widget opens the app with a link I chose, and the helper tells the app about it, whether the app was closed or already running. A lesson I'll come back to: listen for these taps in one place only.",
  "And this is my favourite part. The app can hand the widget a timetable for the rest of the day. If the goal isn't reached yet, the message gets more urgent as the day goes on. Once it's reached, Dash celebrates, and at night goes to sleep. The phone switches between them at the right time, with no app running and no background code. Every time the app saves, it writes a fresh timetable for where you are.",
  "Enough slides. Let's see it running.",
  "Demo 1. Remember the widget says TODAY at the top. I'm going to change that one word in the Dart file, run the command, and rebuild. Three things to watch: the Dart line, the Swift file changing by itself, and the widget on the home screen.",
  "(Recording.) Left: the Dart file and, next to it, the Swift the tool wrote for me. Right: the simulator. TODAY becomes FLUTTERCON. One command, and the Swift updates by itself; the Kotlin changed too. Then I run the app again. Not hot reload: the widget is a native program, so it needs a real rebuild, and I sped that part up. And there it is on the home screen. One line of Dart, both platforms.",
- "(Live; the recording is the backup.) I'm at 4,000 of 5,000 steps with a 12-day streak. I add 1,000 steps. Watch the widget: the numbers turn green, the flame lights up and 12 becomes 13. The app saved the data, asked for a redraw, and the phone did the rest.",
- "Two widgets, two small Dart files, the same command. On the left, both widgets in the iPhone's widget gallery. On the right, the same two widgets on my Xiaomi phone: I add 1,000 steps and both update. Each widget has its own data, so the app saves to both. Getting Android to this point was the interesting part, which I'll come back to.",
+ "(Recording.) I start in the app at 4,000 of 5,000 steps, with a 12-day streak. I tap +1,000. The numbers turn green and the streak becomes 13. Now the home screen: the widget already shows 5,000 and 13. The app saved the data, asked for a redraw, and the phone did the rest.",
+ "Two widgets, and each one is its own small Dart file: stride.dart for the wide one, streak.dart for the small one. The same command generates both, for both platforms. On the left, I add both widgets from the iPhone's widget gallery, then press and hold each one so you can see it up close. On the right, the same two widgets on my Xiaomi phone: I add 1,000 steps and both update. Each widget has its own data, so the app saves to both. Getting Android to this point was the interesting part, which I'll come back to.",
  "(Recording, 2x.) Now the app is completely closed. I reached the goal, so Dash is celebrating. About 30 seconds later, with nothing of mine running, Dash goes to sleep. That's the timetable from a few slides ago. And tapping the widget opens the app on the right screen, even from closed.",
- "(Let it land.) iOS, first run. Android, first run. Same code.",
- "Here's what happened on Android. First, nothing was saved: a package two levels down, path_provider_android, changed how it talks to Android in version 2.3, and that failed on my Android 10 phone. Pinning the older version fixed it. Second, the wide widget came out tiny: Android 10 ignores 'make me four cells wide' and only reads a minimum size. Third, the timed changes arrived late: the phone maker's battery saving delays background work. The app asks; the phone decides.",
- "Three more things tripped me up. First, I listened for widget taps in two places, and the second listener silently replaced the first, because Flutter keeps one handler per channel; listen in one place. Second, every change to the widget file needs generate and a full rebuild; hot reload can't touch native code. Third, fast taps started saves that overlapped and mixed old and new data, so now the newest save wins.",
- "What can't it do yet? Buttons. Ticking something off right on the widget needs native code today: App Intents on iOS 17 and later, a Glance action on Android, connected to a Dart callback through home_widget. And a few other things I ran into: no Expanded or progress bar, no rounded clipping of pictures on iOS, at most ten items in a row on Android, and the description accepts constants only.",
+ "(Let it land.) Same code, first run on both. iOS: everything works. Android: no Dash pictures, no progress blocks, the wide widget squeezed to half its width, and it never updated after a save. Next slide: why.",
+ "Here's what happened on Android. First, nothing was saved: home_widget saves files with the help of a package called path_provider_android, and its version 2.3 failed on my Android 10 phone. Pinning the older version fixed it. Second, the wide widget came out tiny: Android 10 ignores 'make me four cells wide' and only reads a minimum size.",
+ "Four more things tripped me up. First, I listened for taps once per widget. Taps come through one native connection that only keeps one listener, so the second listener replaced the first, and taps on the wide widget did nothing, with no error. Listen in one place. Second, with the sheet already open, I went home and tapped the other widget, and a second sheet opened on top of the first. A widget tap can arrive at any time, even while your app is already showing the result of the last one, so now the sheet only opens if it is not open yet. Third, every change to the widget file needs generate and a full rebuild; hot reload can't touch native code. Fourth, a save takes a moment: pictures, the timetable, cleanup. Fast taps could start saves at the same time and mix old and new data, so now saves run one at a time and the newest wins.",
+ "What can't it do yet? Buttons. Ticking something off right on the widget needs native code today: App Intents on iOS 17 and later, a Glance action on Android, connected to a Dart callback through home_widget. And a few other things I ran into: no Expanded or progress bar, at most ten items in a row on Android, and the description accepts constants only.",
  "If you want to try this on Monday, it's four steps. Add home_widget as a dependency and the generator and CLI as dev dependencies. Put a Dart file with a @HomeWidget class in a home_widget folder. Run the generate command, then a full flutter run. And in your app, save the data and ask for a redraw. One warning for iOS: on a real iPhone, sharing data needs an App Group, and that needs a paid Apple Developer account. The simulator works without one.",
  "If you remember three things. The phone draws your widget, not Flutter. Describe it once in Dart and let the tool write the native code. And save, then ask for a redraw; the phone decides when.",
  "If you want to build your first widget, Anton's codelab takes you through it step by step: a first widget, layout, styling and an empty state, and then pointers to tap-to-open, lists and timed data, which you saw today.",
- "And here's everything from today: the Stride code, the home_widget documentation, the generator's documentation, and the package on pub.dev. Thank you to Anton Borries for these packages.",
+ "And here's everything from today. I tested with home_widget 0.10.0 and the generator and CLI at 0.4.0+1; they're before 1.0, so check the docs if something looks different. Here's the Stride code, the home_widget documentation, the generator's documentation, and the package on pub.dev. Thank you to Anton Borries for these packages.",
+ "Before we get to questions: quiz time! I brought five Dash pins. I'll ask five quick questions about today's talk, and the first person with the right answer gets a pin. Ready?",
+ "Question one, for a Dash pin. Who draws your widget on the home screen? A, Flutter. B, your app, running in the background. C, the phone. D, a web view. Hands up!",
+ "The answer is C: the phone draws it. Flutter only draws inside your app, and your app usually isn't even running. That's the one thing to remember from today.",
+ "Question two. Of the three packages, which one ships inside your app? A, home_widget. B, the generator. C, the CLI. D, all three.",
+ "The answer is A: home_widget. It's a normal dependency because your app uses it while it runs. The generator and the CLI only help you build, so they're dev dependencies.",
+ "Question three. You changed the widget's Dart file. What do you do next? A, hot reload. B, run generate, then a full flutter run. C, hot restart. D, nothing, it updates by itself.",
+ "The answer is B. The widget is native code, so hot reload and hot restart can't touch it. Run generate again, then a full flutter run.",
+ "Question four. In the demo, Dash fell asleep while the app was closed. How? A, the app kept running in the background. B, a push notification woke the widget. C, the widget asked a server. D, the app saved a timetable earlier, and the phone switched on time.",
+ "The answer is D. When the app saved, it also saved a timetable for the rest of the day. The phone switched to the sleeping Dash at the right time, with no app code running.",
+ "Last question. What can't the generator do yet? A, show pictures. B, change on a timetable. C, buttons you can tap on the widget. D, open the app when tapped.",
+ "The answer is C: buttons. Everything else you saw today: Dash's pictures, the timetable, and tapping to open the app. Buttons still need native code.",
  "Thank you! I'm happy to take questions. Scan the code at the top to share feedback, and you can find me at akanshajain.dev or on LinkedIn."
-]
-</script>
+]</script>
 
 <style>
 :root {
@@ -154,7 +161,7 @@ pre.code.sm { font-size: 25px; }
 .needed p { font-size: 20px; line-height: 1.4; color: #A9B9C6; }
 .missing .needed { display: grid; }
 .pwrap { position: relative; }
-.speed { position: absolute; right: -40px; bottom: 110px; z-index: 2; background: #F1F5F8; color: var(--navy-deep); font: 700 26px var(--text); padding: 12px 24px; border-radius: 99px; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
+.speed { position: absolute; right: -40px; bottom: 170px; z-index: 2; background: #F1F5F8; color: var(--navy-deep); font: 700 26px var(--text); padding: 12px 24px; border-radius: 99px; box-shadow: 0 10px 26px rgba(0,0,0,.35); }
 
 /* Image slots: show the picture when the file exists, a labelled placeholder otherwise */
 .slot { position: relative; border-radius: 40px; overflow: hidden; }
@@ -169,6 +176,12 @@ pre.code.sm { font-size: 25px; }
 /* ---------- Demo layout ---------- */
 .demo { grid-template-columns: 1fr auto; grid-template-rows: 1fr; gap: 80px; align-items: center; padding-right: 150px; padding-top: 150px; }
 .demo .left { display: grid; gap: 40px; align-content: center; }
+/* demo slides: phones as tall as the slide allows */
+section.demo { padding-top: 60px; padding-bottom: 100px; }
+section.demo > .event { display: none; }
+.demo .phone.h830 { height: 920px; }
+.demo .phones2 .phone.h760 { height: 830px; }
+.demo .phones2 figure { gap: 44px; }
 .tag { display: flex; align-items: center; gap: 22px; }
 .tag .ti { width: 84px; height: 84px; border-radius: 24px; background: var(--lime); color: var(--navy); display: grid; place-items: center; }
 .tag .ti svg { width: 44px; height: 44px; }
@@ -192,14 +205,55 @@ pre.code.sm { font-size: 25px; }
 .steps3 p { margin: 0; font-size: 29px; line-height: 1.4; color: #B9C8D4; }
 .steps3 .mini { font: 400 24px/1.5 var(--mono); background: #0A141D; border-radius: 18px; padding: 18px 22px; color: #C8D6E0; }
 .steps3 .mini .k { color: var(--lime); }
-section.vidfull { grid-template-rows: 1fr; place-items: center; padding: 50px 112px 130px; }
-section.vidfull .laptop { width: 1320px; }
+section.vidfull { grid-template-rows: 1fr; place-items: center; padding: 22px 0 0; }
+section.vidfull .foot, section.vidfull .event { display: none; }
+section.vidfull .laptop { width: 1620px; }
+section.vidfull .laptop .scr { border-width: 14px 14px 22px; border-radius: 22px 22px 0 0; }
+section.vidfull .laptop .base { height: 20px; }
+section.vidfull .laptop .speed { right: 26px; bottom: 26px; }
 .laptop { position: relative; }
 .laptop .scr { position: relative; aspect-ratio: 16 / 10; background: #05090D; overflow: hidden; border: 22px solid #1A1D21; border-bottom-width: 30px; border-radius: 30px 30px 0 0; box-shadow: 0 0 0 2px #3A3F45, 0 40px 80px rgba(0,0,0,.4); }
 .laptop .scr > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .laptop .base { position: relative; height: 28px; margin: 0 -50px; border-radius: 0 0 28px 28px; background: linear-gradient(#D5DADF, #8E959C); }
 .laptop .base::before { content: ""; position: absolute; left: 50%; top: 0; width: 200px; height: 11px; transform: translateX(-50%); border-radius: 0 0 14px 14px; background: #737A82; }
 .laptop .speed { right: -30px; bottom: 90px; }
+/* Video controls: click the video or press K to play/pause, J / L to go back / forward 5 s */
+.vid { cursor: pointer; }
+.vctl { position: absolute; z-index: 5; left: 50%; bottom: 4%; transform: translateX(-50%); width: 84%; box-sizing: border-box;
+  display: flex; align-items: center; gap: 14px; padding: 10px 18px 10px 10px; border-radius: 99px;
+  background: rgba(8,14,20,.78); color: #F1F5F8; font: 600 19px var(--text); opacity: 0; transition: opacity .25s; cursor: default; }
+.laptop .vctl { width: 46%; bottom: 3%; }
+.vid:hover .vctl, .vid.paused .vctl { opacity: 1; }
+.vid.missing .vctl { display: none; }
+.vctl button { all: unset; cursor: pointer; flex: none; width: 44px; height: 44px; border-radius: 50%; background: var(--lime); color: var(--navy); display: grid; place-items: center; }
+.vctl button svg { width: 22px; height: 22px; }
+.vctl .bar { flex: 1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.22); position: relative; cursor: pointer; }
+.vctl .bar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 4px; background: var(--lime); }
+.vctl .tm { flex: none; font-variant-numeric: tabular-nums; color: #C8D6E0; }
+.spnote { justify-self: start; font: 600 24px var(--text); color: #C8D6E0; background: rgba(255,255,255,.08); border-radius: 99px; padding: 10px 22px; }
+.phone.vid:not(.missing)::after { display: none; } /* the recordings already include the Dynamic Island */
+@media print { .vctl { display: none !important; } }
+/* quiz intro */
+.qintro { grid-template-columns: 1fr 760px; grid-template-rows: 1fr; gap: 90px; align-items: center; }
+.qintro h1 { font-size: 120px; line-height: 1.08; margin-top: 14px; }
+.qintro .lead { font-size: 36px; margin-top: 30px; max-width: 760px; }
+.qintro .rules { display: grid; gap: 18px; margin-top: 44px; }
+.qintro .rules div { display: flex; align-items: center; gap: 22px; font: 500 34px var(--display); color: #F1F5F8; }
+.qintro .rules b { flex: none; width: 60px; height: 60px; border-radius: 50%; display: grid; place-items: center; background: var(--lime); color: var(--navy); font: 700 28px var(--display); }
+.qintro .pin { position: relative; justify-self: center; transform: rotate(4deg); }
+.qintro .pin img { width: 600px; display: block; border-radius: 26px; box-shadow: 0 34px 70px rgba(0,0,0,.45), 0 6px 16px rgba(0,0,0,.3); }
+.qintro .pin .tag { position: absolute; left: -46px; bottom: 54px; transform: rotate(-10deg); background: var(--lime); color: var(--navy); font: 700 34px var(--display); padding: 14px 26px; border-radius: 18px; box-shadow: 0 14px 30px rgba(0,0,0,.35); }
+/* quiz (Dash pin giveaway) */
+.quiz .qhead { display: grid; grid-template-columns: 1fr auto; gap: 48px; align-items: center; }
+.quiz .qhead img { margin-top: 40px; width: 170px; height: 170px; border-radius: 40px; box-shadow: 0 16px 36px rgba(19,32,43,.22); }
+.quiz .opts { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.quiz .opt { display: flex; align-items: center; gap: 28px; padding: 34px 40px; font: 500 36px/1.3 var(--display); color: var(--ink); transition: opacity .2s; }
+.quiz .opt code { font-size: 32px; }
+.quiz .opt .k { flex: none; width: 66px; height: 66px; border-radius: 50%; display: grid; place-items: center; background: var(--sky-soft); color: var(--sky); font: 700 32px var(--display); }
+.quiz .opt .k svg { width: 34px; height: 34px; }
+.quiz.ans .opt { opacity: .38; }
+.quiz.ans .opt.ok { opacity: 1; background: var(--lime); box-shadow: 0 18px 40px rgba(110,140,20,.28); }
+.quiz.ans .opt.ok .k { background: var(--navy); color: var(--lime); }
 .term { background: #0A141D; border: 2px solid rgba(255,255,255,.1); border-radius: 26px; padding: 28px 32px; font: 400 24px/1.6 var(--mono); color: #C8D6E0; max-width: 860px; }
 .term .p { color: var(--lime); }
 .term .ok { color: #8FD16A; }
@@ -227,15 +281,15 @@ section.vidfull .laptop { width: 1320px; }
 .dia .arrow { display: grid; justify-items: center; gap: 18px; text-align: center; font: 600 30px var(--text); color: var(--coral); align-self: center; }
 .dia .arrow svg { width: 100%; height: 60px; }
 /* 5 twice */
-.twice { display: grid; grid-template-columns: 640px 1fr; gap: 44px; align-items: center; }
+.twice { display: grid; grid-template-columns: 860px 1fr; gap: 64px; align-items: center; }
 .twice .wbox { position: relative; }
 .twice .wbox img { width: 100%; display: block; border-radius: 40px; box-shadow: 0 20px 50px rgba(15,29,43,.22); }
 .twice .ring { position: absolute; left: 1.6%; top: 7%; width: 15%; height: 15%; border: 6px solid var(--coral); border-radius: 18px; }
-.twice .wbox figcaption { margin-top: 22px; font-size: 26px; color: var(--muted); }
+.twice .wbox figcaption { margin-top: 26px; font-size: 30px; color: var(--muted); }
 .twice .codes { display: grid; gap: 26px; }
 .twice .panel { padding: 30px 36px; }
 /* 6 meme */
-.meme { grid-template-rows: 1fr; justify-items: center; align-content: center; gap: 30px; text-align: center; }
+.meme { grid-template-rows: auto auto; justify-items: center; align-content: center; gap: 44px; text-align: center; padding-top: 70px; }
 .meme .slot { width: 880px; height: 660px; box-shadow: 0 24px 60px rgba(15,29,43,.25); }
 .mlabel { position: absolute; transform: translateX(-50%); font: 700 32px var(--display); color: #fff; background: rgba(15,29,43,.86); padding: 10px 24px; border-radius: 99px; white-space: nowrap; }
 .slot.missing .mlabel { display: none; }
@@ -244,6 +298,21 @@ section.vidfull .laptop { width: 1320px; }
 .statement h2 { font-size: 92px; max-width: 1500px; }
 .costs { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 56px; }
 .costs span { font: 600 32px var(--text); padding: 18px 30px; border-radius: 99px; background: var(--coral-soft); color: #8E2D1C; }
+.fork8 { display: grid; grid-template-columns: 420px 150px 1fr; align-items: center; margin-top: 64px; max-width: 1500px; }
+.fork8 .one { background: #fff; border-radius: 32px; padding: 34px 38px; box-shadow: 0 10px 30px rgba(15,29,43,.08); display: grid; gap: 8px; }
+.fork8 small { font: 600 22px var(--text); color: var(--muted); text-transform: uppercase; letter-spacing: .08em; }
+.fork8 .one b { font: 600 38px var(--display); }
+.fork8 svg.fork { width: 150px; height: 260px; color: var(--coral); }
+.fork8 .two { display: grid; gap: 24px; }
+.fork8 .side { background: #fff; border-radius: 28px; padding: 26px 34px; box-shadow: 0 10px 30px rgba(15,29,43,.08); display: grid; grid-template-columns: auto 1fr; column-gap: 24px; align-items: center; }
+.fork8 .side .lang { grid-row: span 2; font: 600 22px var(--mono); color: #8E2D1C; background: var(--coral-soft); border-radius: 14px; padding: 10px 16px; }
+.fork8 .side b { font: 600 34px var(--display); }
+.fork8 .side span { font-size: 26px; color: var(--muted); }
+.statement .mid { width: 100%; }
+.statement .mid h2 { max-width: none; white-space: nowrap; }
+.fork8 .side .lang { width: 92px; text-align: center; }
+.statement .notdart { margin-top: 48px; font-size: 36px; color: var(--muted); }
+.statement .notdart b { color: var(--ink); }
 /* section slides */
 .section { grid-template-columns: 1fr 840px; grid-template-rows: 1fr; gap: 80px; align-items: center; }
 .section .num { font: 600 30px var(--display); color: var(--lime); }
@@ -349,6 +418,13 @@ pre.code.dk .k { color: #8CC8FF; } pre.code.dk .s { color: #C6F24A; } pre.code.d
 /* packages */
 .pkg code { font-size: 32px; font-weight: 600; color: var(--ink); }
 .pkg .role { font: 600 24px var(--text); text-transform: uppercase; letter-spacing: .06em; color: var(--sky); }
+.pkg .card { grid-template-rows: auto auto 1fr auto; align-content: stretch; }
+.pkg .dep { display: grid; gap: 8px; padding-top: 22px; border-top: 2px dashed rgba(19,32,43,.14); }
+.pkg .dep b { font: 600 26px var(--mono); color: var(--ink); justify-self: start; background: #E4EAE7; padding: 6px 14px; border-radius: 12px; }
+.pkg .lime .dep { border-top-color: rgba(18,38,58,.22); }
+.pkg .lime .dep b { background: rgba(18,38,58,.12); color: var(--navy); }
+.pkg .dep span { font: 500 24px var(--text); color: var(--muted); }
+.pkg .lime .dep span { color: #34490D; }
 /* split code + aside */
 .split { display: grid; grid-template-columns: 1.25fr .75fr; gap: 44px; align-items: center; }
 .aside { display: grid; gap: 28px; }
@@ -397,16 +473,72 @@ pre.code.dk .k { color: #8CC8FF; } pre.code.dk .s { color: #C6F24A; } pre.code.d
 .facts div { display: grid; grid-template-columns: 70px 1fr; gap: 18px; align-items: center; font-size: 31px; line-height: 1.35; }
 .facts i { width: 70px; height: 70px; border-radius: 20px; background: rgba(255,255,255,.08); display: grid; place-items: center; font-style: normal; font-size: 34px; }
 /* first run */
-.vs { grid-template-rows: auto 1fr; }
-.vs .pair { display: flex; gap: 130px; justify-content: center; align-items: center; align-self: start; }
+.vs { grid-template-columns: 1fr auto; grid-template-rows: 1fr; gap: 90px; align-items: center; }
+.vs .left { display: grid; gap: 0; align-content: center; }
+.vs .left h2 { margin-top: 10px; }
+.vs .pair { display: flex; gap: 64px; align-items: end; margin-top: 70px; }
+.vs .phone { height: 700px; }
 .vs figure { margin: 0; display: grid; gap: 22px; justify-items: center; }
-.vs figcaption { font: 600 36px var(--display); text-align: center; }
-.vs figcaption span { display: block; font: 500 26px var(--text); color: var(--muted); text-align: center; margin-top: 6px; }
+.vs .tagp { font: 600 26px var(--text); padding: 10px 24px; border-radius: 99px; display: inline-flex; align-items: center; gap: 10px; }
+.vs .tagp.ok { background: var(--lime-soft); color: var(--lime-ink); }
+.vs .tagp.bad { background: #F8DDD7; color: #A33A26; }
+.cmp { margin-top: 56px; border-collapse: collapse; font-size: 30px; width: 100%; max-width: 760px; }
+.cmp th { font: 600 24px var(--text); color: var(--muted); text-align: center; padding: 0 0 14px; width: 130px; }
+.cmp th:first-child { width: auto; }
+.cmp td { padding: 18px 0; border-top: 2px solid var(--line); }
+.cmp td:not(:first-child) { text-align: center; }
+.cmp .y, .cmp .n { display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; vertical-align: middle; }
+.cmp .y { background: var(--lime-soft); color: var(--lime-ink); }
+.cmp .n { background: #F8DDD7; color: #C2462F; }
+.cmp svg { width: 24px; height: 24px; }
 /* findings */
 .find .panel { display: grid; gap: 20px; align-content: start; }
 .find .panel h3 { font-size: 38px; }
 .find .panel p { font-size: 28px; line-height: 1.42; color: var(--muted); }
 .find .fix { font: 600 25px var(--text); color: var(--lime-ink); background: var(--lime-soft); border-radius: 14px; padding: 10px 16px; justify-self: start; }
+/* 27/28 visuals: tilted cut-outs on a soft stage */
+.find .stage { height: 300px; border-radius: 26px; background: #E9EEEC; display: flex; align-items: center; justify-content: center; gap: 48px; margin-bottom: 8px; }
+.find .shot { margin: 0; display: grid; justify-items: center; gap: 16px; }
+.find .shot img { height: 200px; width: auto; display: block; border-radius: 10px; box-shadow: 0 20px 34px rgba(19,32,43,.30), 0 3px 8px rgba(19,32,43,.18); }
+.find .shot.exp { transform: rotate(-3deg); }
+.find .shot.got { transform: rotate(3.5deg); }
+.find .tg { font: 700 19px var(--text); letter-spacing: .05em; text-transform: uppercase; padding: 6px 14px; border-radius: 99px; white-space: nowrap; }
+.find .tg.ok { background: var(--lime-soft); color: var(--lime-ink); }
+.find .tg.bad { background: #F8DDD7; color: #A33A26; }
+.find.t28 .stage { height: 250px; }
+.find.t28 .grid4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.find.t28 .panel { padding: 30px; gap: 16px; border-radius: 34px; }
+.find.t28 .panel h3 { font-size: 32px; }
+.find.t28 .panel p { font-size: 24px; }
+.find.t28 .fix { font-size: 21px; }
+.find.t28 .stage .tg { font-size: 16px; }
+.find.t28 .sheet img { width: 290px; }
+.find.t28 .term { width: 290px; font-size: 19px; padding: 14px 18px 16px; }
+.find.t28 .paper { width: 310px; padding: 16px 18px; }
+.find.t28 .lane { grid-template-columns: 58px 1fr; gap: 8px; }
+.find.t28 .lane > b { font-size: 14px; }
+.find.t28 .bar span { font-size: 14px; }
+.find .stack { position: relative; width: 300px; height: 150px; }
+.find .stack img { position: absolute; width: 260px; border-radius: 22px; box-shadow: 0 20px 34px rgba(19,32,43,.30), 0 3px 8px rgba(19,32,43,.18); }
+.find .stack .back { left: 0; top: 0; transform: rotate(-7deg); filter: brightness(.8); }
+.find .stack .front { left: 40px; top: 30px; transform: rotate(3deg); }
+.find .stage.col { flex-direction: column; gap: 26px; }
+.find .sheet img { width: 340px; height: auto; border-radius: 24px; }
+.find .sheet { transform: rotate(-4deg); }
+.find .term { transform: rotate(3deg); width: 370px; background: var(--navy); border-radius: 18px; padding: 16px 22px 20px; box-shadow: 0 20px 34px rgba(19,32,43,.30), 0 3px 8px rgba(19,32,43,.18); font: 500 22px/1.7 var(--mono); color: #EEF3F6; }
+.find .term .dots { display: flex; gap: 8px; margin-bottom: 8px; }
+.find .term .dots i { width: 12px; height: 12px; border-radius: 50%; background: #3A4E60; }
+.find .term .pr { color: var(--lime); margin-right: 10px; }
+.find .term .no { color: #F08A75; text-decoration: line-through; text-decoration-thickness: 2px; }
+.find .paper { transform: rotate(-2.5deg); width: 400px; background: #fff; border-radius: 18px; padding: 18px 22px; box-shadow: 0 20px 34px rgba(19,32,43,.22), 0 3px 8px rgba(19,32,43,.12); display: grid; gap: 14px; }
+.find .lane { display: grid; grid-template-columns: 74px 1fr; align-items: center; gap: 12px; }
+.find .lane > b { font: 700 17px var(--text); letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.find .track { position: relative; height: 62px; }
+.find .bar { position: absolute; height: 14px; border-radius: 7px; }
+.find .bar.c { background: var(--coral); }
+.find .bar.l { background: #8DBB1E; }
+.find .bar.sk { border: 2px dashed #B9C3BF; background: none; height: 10px; }
+.find .bar span { position: absolute; left: 100%; margin-left: 8px; top: -5px; font: 600 16px var(--text); color: var(--muted); white-space: nowrap; }
 /* limits */
 .limits { display: grid; grid-template-columns: 1.05fr .95fr; gap: 44px; align-items: start; }
 .tick { position: relative; margin-top: 40px; display: grid; justify-items: start; gap: 22px; }
@@ -574,7 +706,7 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
     <div class="panel card">
       <div class="icon lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></svg></div>
       <h3>The home screen</h3>
-      <p>Drawn by the phone all day, even when your app is closed.</p>
+      <p>Run by the phone, not your app. Your widget stays on it even when your app is closed.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap"><span class="chip">iOS · SwiftUI + WidgetKit</span><span class="chip">Android · Jetpack Glance</span></div>
     </div>
   </div>
@@ -584,7 +716,7 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
 <!-- 5 -->
 <section data-label="Built twice">
   <span class="event">flutterCon India 2026</span>
-  <div><div class="ey">Until now</div><h2>So you built the same widget <span class="hl">twice.</span></h2></div>
+  <div><div class="ey">Until now</div><h2>Look at the code for <span class="hl">one small label.</span></h2></div>
   <div class="twice mid">
     <figure class="wbox" style="margin:0">
       <div style="position:relative"><img src="assets/img/widget_wide.png" alt="A step widget with a small grey TODAY label at the top"><span class="ring" aria-hidden="true"></span></div>
@@ -609,8 +741,8 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
 <!-- 6 -->
 <section class="meme" data-label="Meme: twins">
   <span class="event">flutterCon India 2026</span>
-  <div class="slot memeimg"><img src="assets/img/meme_twins.jpg" alt="Two identical Spider-Men pointing at each other"><span class="mlabel" style="left:28%;top:4%">SwiftUI widget</span><span class="mlabel" style="left:73%;top:5%">Glance widget</span><div class="ph"><b>Meme</b><code>assets/img/meme_twins.jpg</code></div></div>
-  <div class="cap">Same widget. Two languages.</div>
+  <div class="slot memeimg"><img src="assets/img/meme_twins.jpg" alt="Two identical Spider-Men pointing at each other"><span class="mlabel" style="left:28%;top:4%">iOS widget</span><span class="mlabel" style="left:73%;top:5%">Android widget</span><div class="ph"><b>Meme</b><code>assets/img/meme_twins.jpg</code></div></div>
+  <div class="cap">Same widget. Written twice.</div>
   <div class="foot" style="text-align:left"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
@@ -619,8 +751,8 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
   <span class="event">flutterCon India 2026</span>
   <div><div class="ey">And it's not just the UI</div><h2>…plus all the setup <span class="hl">around it.</span></h2></div>
   <div class="grid2 mid">
-    <div class="panel"><div class="codehead" style="font-size:36px">iOS</div><ul class="list"><li>Add a widget extension target in Xcode</li><li>Create an App Group so the app and widget can share data</li><li>Set up entitlements and signing for both</li><li>Write the timeline provider in Swift</li></ul></div>
-    <div class="panel"><div class="codehead" style="font-size:36px">Android</div><ul class="list"><li>Write a receiver class</li><li>Register it in the manifest</li><li>Describe the widget's size in an XML file</li><li>Add Glance to Gradle and write the UI in Kotlin</li></ul></div>
+    <div class="panel"><div class="codehead" style="font-size:36px">iOS</div><ul class="list"><li>Add a widget extension in Xcode: a second, small app</li><li>Create an App Group: a folder the app and widget share</li><li>Turn on that App Group and set up signing for both</li><li>Write a timeline provider in Swift: what to show, and when</li></ul></div>
+    <div class="panel"><div class="codehead" style="font-size:36px">Android</div><ul class="list"><li>Write a receiver class: the code the home screen talks to</li><li>Register it in the app's manifest</li><li>Describe the widget's size in an XML file</li><li>Add Glance to Gradle and write the UI in Kotlin</li></ul></div>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -631,8 +763,16 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
   <div></div>
   <div class="mid">
     <div class="ey">The problem</div>
-    <h2>A widget meant a small <span class="hl coral">native project</span> inside your Flutter app.</h2>
-    <div class="costs"><span>Two languages</span><span>Two UIs to keep in sync</span><span>Native setup on both platforms</span></div>
+    <h2>Every widget change, <span class="hl coral">made twice.</span></h2>
+    <div class="fork8">
+      <div class="one"><small>One change</small><b>“Show the streak”</b></div>
+      <svg class="fork" viewBox="0 0 150 260" fill="none" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 130h40c30 0 30-75 60-75h28M118 37l18 18-18 18"/><path d="M48 130c30 0 30 75 60 75h28M118 187l18 18-18 18"/></svg>
+      <div class="two">
+        <div class="side"><span class="lang">Swift</span><b>SwiftUI view in Xcode</b><span>then test it on an iPhone</span></div>
+        <div class="side"><span class="lang">Kotlin</span><b>Glance view with Gradle</b><span>then test it on an Android phone</span></div>
+      </div>
+    </div>
+    <p class="notdart">And neither of them is <b>Dart</b>, the language your team writes every day.</p>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -663,9 +803,9 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
   <div><div class="ey">What's new</div><h2>Three packages, <span class="hl">three jobs.</span></h2></div>
   <div class="mid">
     <div class="grid3 pkg">
-      <div class="panel card"><span class="role">In your app</span><code>home_widget</code><p>Saves data for the widget, asks the phone to redraw it, and tells your app when the widget is tapped.</p></div>
-      <div class="panel card lime"><span class="role" style="color:var(--navy)">New · describe</span><code>home_widget_generator</code><p>Building blocks to describe the widget in Dart.</p></div>
-      <div class="panel card lime"><span class="role" style="color:var(--navy)">New · generate</span><code>home_widget_cli</code><p>Reads that description and writes the Swift, the Kotlin and a Dart helper.</p></div>
+      <div class="panel card"><span class="role">In your app</span><code>home_widget</code><p>Saves data for the widget, asks the phone to redraw it, and tells your app when the widget is tapped.</p><div class="dep"><b>dependencies:</b><span>Ships inside your app</span></div></div>
+      <div class="panel card lime"><span class="role" style="color:var(--navy)">New · describe</span><code>home_widget_generator</code><p>Building blocks to describe the widget in Dart.</p><div class="dep"><b>dev_dependencies:</b><span>Only while you build</span></div></div>
+      <div class="panel card lime"><span class="role" style="color:var(--navy)">New · generate</span><code>home_widget_cli</code><p>Reads that description and writes the Swift, the Kotlin and a Dart helper.</p><div class="dep"><b>dev_dependencies:</b><span>Only while you build</span></div></div>
     </div>
     <p class="src" style="margin-top:30px">All three by Anton Borries. The generator and CLI were first released in September 2026 and are still before 1.0.</p>
   </div>
@@ -732,7 +872,7 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
       <div class="outs">
         <div class="panel">iOS widgets <span>SwiftUI · 847 lines</span></div>
         <div class="panel">Android widgets <span>Glance · 794 lines</span></div>
-        <div class="panel lime">Dart helpers <span style="color:#34490D">for your app</span></div>
+        <div class="panel lime">Dart helper class <span style="color:#34490D">saveData · updateWidget</span></div>
         <div class="panel">Xcode + Android setup <span>wired up for you</span></div>
       </div>
     </div>
@@ -747,7 +887,7 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
   <div><div class="ey">Before and after</div><h2>Same widget, <span class="hl">a lot less work.</span></h2></div>
   <div class="grid2 mid">
     <div class="panel coral"><h3><span class="icon coral" style="width:64px;height:64px;border-radius:18px;background:#fff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></span>Before</h3><ul class="list"><li>Write the widget in SwiftUI</li><li>Write it again in Glance</li><li>Set up both platforms by hand</li><li>Keep the two in sync forever</li></ul></div>
-    <div class="panel lime"><h3><span class="icon" style="width:64px;height:64px;border-radius:18px;background:#fff;color:var(--lime-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Now</h3><ul class="list"><li>Describe it once in Dart</li><li>Run one command</li><li>Use a typed Dart helper in your app</li><li>Change it in one place</li></ul></div>
+    <div class="panel lime"><h3><span class="icon" style="width:64px;height:64px;border-radius:18px;background:#fff;color:var(--lime-ink)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span>Now</h3><ul class="list"><li>Describe it once in Dart</li><li>Run one command</li><li>Save data with the generated Dart class</li><li>Change it in one place</li></ul></div>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -775,6 +915,7 @@ pre.code.xs { font-size: 19px; line-height: 1.55; white-space: pre-wrap; word-br
     <div class="conn" style="align-self:center"><svg viewBox="0 0 210 40" style="width:210px" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 20h192M180 6l18 14-18 14"/></svg><i class="pkt late"></i><span>read by widget</span></div>
     <div class="panel card"><div class="icon lime"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></svg></div><h3>Your widget</h3><p>Reads it whenever the phone redraws.</p></div>
   </div>
+  <p class="src" style="align-self:start;margin:-10px 0 0;font-size:30px">Pictures, like Dash, are saved as files in the same shared space.</p>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
@@ -879,7 +1020,7 @@ widgetUrl: <span class="s">'stride://today'</span>,
 
 <!-- 21b: the Demo 1 recording, full size -->
 <section class="deep vidfull" data-label="Demo 1 recording">
-  <div class="laptop"><div class="scr vid missing"><video data-src="assets/video/01_generate.mp4" muted loop playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/01_generate.mp4</code><p>Screen recording: VS Code with stride.dart and the generated Swift, plus the simulator. Change one word, generate, rebuild. About 30 s.</p></div></div><div class="base"></div><span class="speed">Build sped up</span></div>
+  <div class="laptop"><div class="scr vid missing"><video data-src="assets/video/01_generate.mp4" poster="assets/video/poster_01_generate.jpg" muted playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/01_generate.mp4</code><p>Screen recording: VS Code with stride.dart and the generated Swift, plus the simulator. Change one word, generate, rebuild. About 30 s.</p></div></div><div class="base"></div></div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
@@ -889,9 +1030,9 @@ widgetUrl: <span class="s">'stride://today'</span>,
   <div class="left">
     <div class="tag"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span>Demo 2 · Add 1,000 steps</span></div>
     <h2>The app saves, <span class="hl">the widget follows.</span></h2>
-    <div class="watch"><b>Watch for</b><ol><li>4,000 of 5,000 steps, 12-day streak</li><li>Tap +1,000 and go to the home screen</li><li>Green numbers, a lit flame, and 12 becomes 13</li></ol></div>
+    <div class="watch"><b>Watch for</b><ol><li>In the app: 4,000 of 5,000 steps, a 12-day streak</li><li>Tap +1,000 and go to the home screen</li><li>Green numbers, a lit flame, and 12 becomes 13</li></ol></div>
   </div>
-  <div class="phone h830 vid missing"><img src="assets/img/ios_home.jpg" alt=""><video data-src="assets/video/02_add_steps.mp4" muted loop playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/02_add_steps.mp4</code><p>At 4,000 of 5,000 with a 12-day streak, tap +1,000, go home. About 20 s.</p></div></div>
+  <div class="phone h830 vid missing"><img src="assets/video/poster_02_add_steps.jpg" alt=""><video data-src="assets/video/02_add_steps.mp4" poster="assets/video/poster_02_add_steps.jpg" muted playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/02_add_steps.mp4</code><p>At 4,000 of 5,000 with a 12-day streak, tap +1,000, go home. About 20 s.</p></div></div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
@@ -900,12 +1041,12 @@ widgetUrl: <span class="s">'stride://today'</span>,
   <span class="event">flutterCon India 2026</span>
   <div class="left">
     <div class="tag"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="8" rx="2"/><rect x="3" y="13" width="18" height="8" rx="2"/></svg></span><span>Demo 3 · Two widgets, two platforms</span></div>
-    <h2>Two Dart files, <span class="hl">iOS and Android.</span></h2>
-    <div class="watch"><b>Watch for</b><ol><li>Both widgets in the widget gallery</li><li>The same widgets on a Xiaomi phone</li><li>+1,000 steps updates both</li></ol></div>
+    <h2>Two widgets,<br><span class="hl">iOS and Android.</span></h2>
+    <div class="watch"><b>Watch for</b><ol><li>Both widgets added from the iPhone's gallery, then held up close</li><li>The same two widgets on a Xiaomi phone</li><li>+1,000 steps updates both</li></ol></div>
   </div>
   <div class="phones2">
-    <figure><div class="phone h760 vid missing"><img src="assets/img/ios_home.jpg" alt=""><video data-src="assets/video/03_add_widgets.mp4" muted loop playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>03_add_widgets.mp4</code><p>iPhone: add both widgets from the gallery.</p></div></div><figcaption>iOS</figcaption></figure>
-    <figure><div class="phone android h760 vid missing"><img src="assets/img/android_home.jpg" alt=""><video data-src="assets/video/07_android.mp4" muted loop playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>07_android.mp4</code><p>Redmi: +1,000 steps, then the home screen.</p></div></div><figcaption>Android</figcaption></figure>
+    <figure><div class="phone h760 vid missing"><img src="assets/video/poster_03_add_widgets.jpg" alt=""><video data-src="assets/video/03_add_widgets.mp4" poster="assets/video/poster_03_add_widgets.jpg" muted playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>03_add_widgets.mp4</code><p>iPhone: add both widgets from the gallery.</p></div></div><figcaption>iOS</figcaption></figure>
+    <figure><div class="phone android h760 vid missing"><img src="assets/video/poster_07_android.jpg" alt=""><video data-src="assets/video/07_android.mp4" poster="assets/video/poster_07_android.jpg" muted playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>07_android.mp4</code><p>Redmi: +1,000 steps, then the home screen.</p></div></div><figcaption>Android</figcaption></figure>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -917,18 +1058,23 @@ widgetUrl: <span class="s">'stride://today'</span>,
     <div class="tag"><span class="ti"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></span><span>Demo 4 · The app is closed</span></div>
     <h2>The widget keeps changing <span class="hl">on its own.</span></h2>
     <div class="watch"><b>Watch for</b><ol><li>Goal reached, then the app is closed</li><li>About 30 seconds later, Dash goes to sleep</li><li>A tap on the widget opens the app on the right screen</li></ol></div>
+    <span class="spnote">The wait for Dash to fall asleep plays at 2×</span>
   </div>
-  <div class="pwrap"><div class="phone h830 vid missing"><img src="assets/img/ios_home.jpg" alt=""><video data-src="assets/video/05_app_closed.mp4" muted loop playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/05_app_closed.mp4</code><p>Reach the goal, tap “Nudges every 30 s”, close the app, wait for Dash to sleep, then tap the widget. Speed it up 2×.</p></div></div><span class="speed">2× speed</span></div>
+  <div class="pwrap"><div class="phone h830 vid missing"><img src="assets/video/poster_05_app_closed.jpg" alt=""><video data-src="assets/video/05_app_closed.mp4" poster="assets/video/poster_05_app_closed.jpg" muted playsinline preload="auto"></video><div class="needed"><b>Recording needed</b><code>assets/video/05_app_closed.mp4</code><p>Reach the goal, tap “Nudges every 30 s”, close the app, wait for Dash to sleep, then tap the widget. Speed it up 2×.</p></div></div></div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
 <!-- 26 -->
 <section class="vs" data-label="First run">
   <span class="event">flutterCon India 2026</span>
-  <div><div class="ey">What I ran into</div><h2>Same code. <span class="hl coral">First run.</span></h2></div>
+  <div class="left">
+    <div class="ey">What I ran into</div>
+    <h2>Same code. <span class="hl coral">First run.</span></h2>
+    <table class="cmp"><thead><tr><th></th><th>iOS</th><th>Android</th></tr></thead><tbody><tr><td>Dash pictures</td><td><span class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></td><td><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span></td></tr><tr><td>Progress blocks</td><td><span class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></td><td><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span></td></tr><tr><td>Wide widget at full width</td><td><span class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></td><td><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span></td></tr><tr><td>Updates after a save</td><td><span class="y"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></td><td><span class="n"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M7 7l10 10M17 7L7 17"/></svg></span></td></tr></tbody></table>
+  </div>
   <div class="pair">
-    <figure><div class="phone h680"><img src="assets/img/ios_home.jpg" alt="iOS: both widgets working"></div><figcaption>iOS<span>Worked the first time</span></figcaption></figure>
-    <figure><div class="phone android h680"><img src="assets/img/android_first_try.jpg" alt="Android: widgets without pictures, not updating"></div><figcaption>Android<span>No pictures, no updates</span></figcaption></figure>
+    <figure><span class="tagp ok">iOS · worked first time</span><div class="phone h760"><img src="assets/img/ios_home.jpg" alt="iOS: both widgets working"></div></figure>
+    <figure><span class="tagp bad">Android · first try</span><div class="phone android h760"><img src="assets/img/android_first_try.jpg" alt="Android: widgets without pictures, not updating"></div></figure>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -938,24 +1084,24 @@ widgetUrl: <span class="s">'stride://today'</span>,
   <span class="event">flutterCon India 2026</span>
   <div><div class="ey">What I ran into</div><h2>Android taught me <span class="hl">the most.</span></h2></div>
   <div class="mid">
-    <div class="grid3">
-      <div class="panel"><div class="icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M9 15l6-6M15 15L9 9"/></svg></div><h3>Nothing was saved</h3><p>A package two levels down, <code>path_provider_android</code> 2.3, failed on my Android 10 phone, so no files were saved and the widget never redrew.</p><span class="fix">Fix: pinned <code>2.2.23</code></span></div>
-      <div class="panel"><div class="icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="7" width="18" height="10" rx="2"/><path d="M8 12h8"/></svg></div><h3>The wide widget was tiny</h3><p>Android 12+ understands “4 × 2 cells”. Android 10 only reads a minimum width and height.</p><span class="fix">Fix: set <code>minWidth</code> and <code>minHeight</code></span></div>
-      <div class="panel"><div class="icon coral"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg></div><h3>Timed changes came late</h3><p>The alarms were exact, but the redraws arrived late on Xiaomi's MIUI.</p><span class="fix">Lesson: the phone decides when</span></div>
+    <div class="grid2">
+      <div class="panel"><div class="stage"><figure class="shot exp"><span class="tg ok">Expected</span><img src="assets/img/bug_small_expected.jpg" alt="The small widget with Dash and a 2-day streak"></figure><figure class="shot got"><span class="tg bad">What I got</span><img src="assets/img/bug_small_got.jpg" alt="The small widget on the first Android run: empty, streak 0"></figure></div><h3>Nothing was saved</h3><p><code>home_widget</code> saves files with the help of <code>path_provider_android</code>. Version 2.3 of it failed on my Android 10 phone, so no files were saved and the widget never redrew.</p><span class="fix">Fix: pinned <code>2.2.23</code></span></div>
+      <div class="panel"><div class="stage"><figure class="shot exp"><span class="tg ok">Expected</span><img src="assets/img/bug_wide_expected.jpg" alt="The wide widget across the full width"></figure><figure class="shot got"><span class="tg bad">What I got</span><img src="assets/img/bug_wide_got.jpg" alt="The wide widget on the first Android run: half width"></figure></div><h3>The wide widget was tiny</h3><p>Android 12+ understands “4 × 2 cells”. Android 10 only reads a minimum width and height.</p><span class="fix">Fix: set <code>minWidth</code> and <code>minHeight</code></span></div>
     </div>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
 
 <!-- 28 -->
-<section class="find" data-label="Bugs in between">
+<section class="find t28" data-label="Bugs in between">
   <span class="event">flutterCon India 2026</span>
-  <div><div class="ey">What I ran into</div><h2>Three things that <span class="hl">tripped me up.</span></h2></div>
+  <div><div class="ey">What I ran into</div><h2>Four things that <span class="hl">tripped me up.</span></h2></div>
   <div class="mid">
-    <div class="grid3">
-      <div class="panel"><h3>Two tap listeners</h3><p>Widget taps arrive on one channel, and Flutter keeps one handler per channel. My second listener silently replaced the first.</p><span class="fix">Listen in one place</span></div>
-      <div class="panel"><h3>No hot reload for widgets</h3><p>Every change to the widget file needs <code>generate</code> again, then a full <code>flutter run</code>. Hot reload can't change native code.</p><span class="fix">Rebuild after every change</span></div>
-      <div class="panel"><h3>Overlapping saves</h3><p>Saving pictures takes a moment. Fast taps started saves that mixed old and new data.</p><span class="fix">The newest save wins</span></div>
+    <div class="grid4">
+      <div class="panel"><div class="stage col"><figure class="shot sheet"><img src="assets/img/sheet_walk.jpg" alt="Stride's Back from a walk? sheet"></figure><span class="tg bad">Wide widget tap: never opened</span></div><h3>Two tap listeners</h3><p>I listened for taps once per widget. Only one listener is kept, so taps on the wide widget did nothing.</p><span class="fix">Listen in one place</span></div>
+      <div class="panel"><div class="stage col"><div class="stack" aria-label="Two copies of the sheet, one on top of the other"><img class="back" src="assets/img/sheet_walk.jpg" alt=""><img class="front" src="assets/img/sheet_walk.jpg" alt=""></div><span class="tg bad">A sheet on top of a sheet</span></div><h3>Stacked sheets</h3><p>With the sheet open, I went home and tapped the other widget. A second sheet opened on top.</p><span class="fix">Open it only if it's closed</span></div>
+      <div class="panel"><div class="stage"><div class="term" aria-label="Terminal: hot reload crossed out, then generate and flutter run"><div class="dots"><i></i><i></i><i></i></div><div><span class="pr">r</span><span class="no">hot reload</span></div><div><span class="pr">$</span>dart run … generate</div><div><span class="pr">$</span>flutter run</div></div></div><h3>No hot reload for widgets</h3><p>Every change to the widget file needs <code>generate</code> again, then a full <code>flutter run</code>.</p><span class="fix">Rebuild after every change</span></div>
+      <div class="panel"><div class="stage"><div class="paper" aria-label="Before: three saves overlap. Now: one at a time, the middle one skipped"><div class="lane"><b>Before</b><div class="track"><i class="bar c" style="left:0;width:50%;top:0"></i><i class="bar c" style="left:10%;width:50%;top:24px"></i><i class="bar c" style="left:20%;width:50%;top:48px"><span>mixed</span></i></div></div><div class="lane"><b>Now</b><div class="track"><i class="bar l" style="left:0;width:34%;top:0"></i><i class="bar sk" style="left:10%;width:24%;top:26px"><span>skipped</span></i><i class="bar l" style="left:36%;width:34%;top:48px"><span>newest</span></i></div></div></div></div><h3>Overlapping saves</h3><p>Fast taps could start saves at the same time and mix old and new data.</p><span class="fix">The newest save wins</span></div>
     </div>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
@@ -974,7 +1120,7 @@ widgetUrl: <span class="s">'stride://today'</span>,
         <span class="ntag">This button needs native code</span>
       </div>
     </div>
-    <div class="panel"><div class="codehead" style="font-size:32px">Also good to know</div><ul class="list"><li>No <code>Expanded</code> and no progress bar</li><li>Pictures can't be clipped to round corners on iOS</li><li>At most 10 items in a row on Android</li><li>The description accepts constants only</li><li>Before 1.0: expect breaking changes</li></ul></div>
+    <div class="panel"><div class="codehead" style="font-size:32px">Also good to know</div><ul class="list"><li>No <code>Expanded</code> and no progress bar</li><li>At most 10 items in a row on Android</li><li>The description accepts constants only</li></ul></div>
   </div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
 </section>
@@ -1030,7 +1176,7 @@ updateWidget()</pre></div>
 <!-- 32 -->
 <section data-label="Resources">
   <span class="event">flutterCon India 2026</span>
-  <div><div class="ey">Scan to open</div><h2>Everything <span class="hl">from this talk.</span></h2></div>
+  <div><div class="ey">Scan to open</div><h2>Everything <span class="hl">from this talk.</span></h2><p class="src" style="margin-top:22px;font-size:26px">Tested with <code>home_widget</code> 0.10.0, <code>home_widget_generator</code> 0.4.0+1 and <code>home_widget_cli</code> 0.4.0+1, on Flutter 3.47.8.</p></div>
   <div class="res mid">
     <div class="item"><div class="qrbox"><img src="assets/img/qr_repo.png" alt="QR code for the Stride code"></div><b>The demo app</b><span>github.com/jakansha2001/flutter-home-screen-widgets</span></div>
     <div class="item"><div class="qrbox" style="--qr:var(--sky)"><img src="assets/img/qr_docs.png" alt="QR code for the home_widget documentation"></div><b><code>home_widget</code> docs</b><span>docs.page/abausg/home_widget</span></div>
@@ -1040,11 +1186,105 @@ updateWidget()</pre></div>
   <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter · Thanks to Anton Borries for these packages</span><span class="pg"></span></div>
 </section>
 
+
+<!-- quiz intro -->
+<section class="navy qintro" data-label="Quiz time">
+  <span class="event">flutterCon India 2026</span>
+  <div>
+    <div class="ey">Before questions</div>
+    <h1>Quiz <span class="hl">time!</span></h1>
+    <p class="lead">Five quick questions about today's talk.</p>
+    <div class="rules"><div><b>5</b>questions</div><div><b>5</b>Dash pins, one per question</div><div><b><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></b>First right answer wins the pin</div></div>
+  </div>
+  <figure class="pin" style="margin:0"><img src="assets/img/dash_pin.jpg" alt="A Dash enamel pin on its Flutter card"><span class="tag">Win me!</span></figure>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 1 -->
+<section class="quiz" data-label="Quiz 1">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Question 1 of 5</div><h2>Who draws your widget on the <span class="hl">home screen?</span></h2></div><img src="assets/img/dash_ready.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Flutter</span></div><div class="panel opt"><span class="k">B</span><span>Your app, running in the background</span></div><div class="panel opt"><span class="k">C</span><span>The phone: iOS or Android</span></div><div class="panel opt"><span class="k">D</span><span>A web view</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 1 answer -->
+<section class="quiz ans" data-label="Quiz 1 answer">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Answer 1 of 5</div><h2>Who draws your widget on the <span class="hl">home screen?</span></h2></div><img src="assets/img/dash_ready.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Flutter</span></div><div class="panel opt"><span class="k">B</span><span>Your app, running in the background</span></div><div class="panel opt ok"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>The phone: iOS or Android</span></div><div class="panel opt"><span class="k">D</span><span>A web view</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 2 -->
+<section class="quiz" data-label="Quiz 2">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Question 2 of 5</div><h2>Which package ships <span class="hl">inside your app?</span></h2></div><img src="assets/img/dash_walk.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span><code>home_widget</code></span></div><div class="panel opt"><span class="k">B</span><span><code>home_widget_generator</code></span></div><div class="panel opt"><span class="k">C</span><span><code>home_widget_cli</code></span></div><div class="panel opt"><span class="k">D</span><span>All three</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 2 answer -->
+<section class="quiz ans" data-label="Quiz 2 answer">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Answer 2 of 5</div><h2>Which package ships <span class="hl">inside your app?</span></h2></div><img src="assets/img/dash_walk.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt ok"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span><code>home_widget</code></span></div><div class="panel opt"><span class="k">B</span><span><code>home_widget_generator</code></span></div><div class="panel opt"><span class="k">C</span><span><code>home_widget_cli</code></span></div><div class="panel opt"><span class="k">D</span><span>All three</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 3 -->
+<section class="quiz" data-label="Quiz 3">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Question 3 of 5</div><h2>You changed the widget's Dart file. <span class="hl">What next?</span></h2></div><img src="assets/img/dash_run.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Hot reload</span></div><div class="panel opt"><span class="k">B</span><span>Run <code>generate</code>, then a full <code>flutter run</code></span></div><div class="panel opt"><span class="k">C</span><span>Hot restart</span></div><div class="panel opt"><span class="k">D</span><span>Nothing, it updates by itself</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 3 answer -->
+<section class="quiz ans" data-label="Quiz 3 answer">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Answer 3 of 5</div><h2>You changed the widget's Dart file. <span class="hl">What next?</span></h2></div><img src="assets/img/dash_run.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Hot reload</span></div><div class="panel opt ok"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>Run <code>generate</code>, then a full <code>flutter run</code></span></div><div class="panel opt"><span class="k">C</span><span>Hot restart</span></div><div class="panel opt"><span class="k">D</span><span>Nothing, it updates by itself</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 4 -->
+<section class="quiz" data-label="Quiz 4">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Question 4 of 5</div><h2>How did Dash fall asleep <span class="hl">with the app closed?</span></h2></div><img src="assets/img/dash_rest.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>The app kept running in the background</span></div><div class="panel opt"><span class="k">B</span><span>A push notification woke the widget</span></div><div class="panel opt"><span class="k">C</span><span>The widget asked a server</span></div><div class="panel opt"><span class="k">D</span><span>The app saved a timetable earlier, and the phone switched on time</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 4 answer -->
+<section class="quiz ans" data-label="Quiz 4 answer">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Answer 4 of 5</div><h2>How did Dash fall asleep <span class="hl">with the app closed?</span></h2></div><img src="assets/img/dash_rest.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>The app kept running in the background</span></div><div class="panel opt"><span class="k">B</span><span>A push notification woke the widget</span></div><div class="panel opt"><span class="k">C</span><span>The widget asked a server</span></div><div class="panel opt ok"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>The app saved a timetable earlier, and the phone switched on time</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 5 -->
+<section class="quiz" data-label="Quiz 5">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Question 5 of 5</div><h2>What can't the generator <span class="hl">do yet?</span></h2></div><img src="assets/img/dash_goal.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Show pictures</span></div><div class="panel opt"><span class="k">B</span><span>Change on a timetable</span></div><div class="panel opt"><span class="k">C</span><span>Buttons you can tap on the widget</span></div><div class="panel opt"><span class="k">D</span><span>Open the app when tapped</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
+<!-- quiz 5 answer -->
+<section class="quiz ans" data-label="Quiz 5 answer">
+  <span class="event">flutterCon India 2026</span>
+  <div class="qhead"><div><div class="ey">Dash pin giveaway · Answer 5 of 5</div><h2>What can't the generator <span class="hl">do yet?</span></h2></div><img src="assets/img/dash_goal.png" alt=""></div>
+  <div class="mid"><div class="opts"><div class="panel opt"><span class="k">A</span><span>Show pictures</span></div><div class="panel opt"><span class="k">B</span><span>Change on a timetable</span></div><div class="panel opt ok"><span class="k"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></span><span>Buttons you can tap on the widget</span></div><div class="panel opt"><span class="k">D</span><span>Open the app when tapped</span></div></div></div>
+  <div class="foot"><span><span class="mark"><i></i><i></i><i></i><i></i></span>Home screen widgets in Flutter</span><span class="pg"></span></div>
+</section>
+
 <!-- 33 -->
 <section class="navy thanks" data-label="Thank you">
   <span class="event">flutterCon India 2026</span>
   <div class="me">
-    <div class="portrait"><img src="assets/img/headshot.jpg" alt="Akansha Jain"></div>
+    <div class="portrait"><img src="assets/img/photo_cat.jpg" alt="Akansha Jain holding her cat"></div>
     <b>Akansha Jain</b>
     <span>Senior Software Engineer · AutoNation Inc.</span>
   </div>
@@ -1092,23 +1332,71 @@ updateWidget()</pre></div>
     img.addEventListener('error', mark);
   });
 
-  // Demo recordings: frames start with a "Recording needed" card; it disappears once a clip loads.
-  document.querySelectorAll('.vid video[data-src]').forEach((v) => {
+  // Demo recordings. Each clip loads when the deck opens, starts from the beginning when its slide opens,
+  // and stops on its last frame. Click the video or press K to play/pause; J / L go back / forward 5 s.
+  const PLAY = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>';
+  const PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  const fmt = (t) => { t = Math.max(0, Math.floor(t || 0)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); };
+  const vids = [...document.querySelectorAll('.vid video[data-src]')];
+  function toggle(v) {
+    if (v.paused || v.ended) { if (v.ended) v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+    else v.pause();
+  }
+  vids.forEach((v) => {
     const frame = v.closest('.vid');
     v.style.zIndex = 0;
     v.addEventListener('loadeddata', () => { frame.classList.remove('missing'); v.style.zIndex = 1; });
+    v.setAttribute('src', v.dataset.src);
+    const ctl = document.createElement('div');
+    ctl.className = 'vctl';
+    ctl.innerHTML = '<button type="button" aria-label="Play or pause">' + PLAY + '</button><div class="bar"><i></i></div><span class="tm">0:00</span>';
+    frame.appendChild(ctl);
+    const btn = ctl.querySelector('button'), fill = ctl.querySelector('.bar i'), tm = ctl.querySelector('.tm');
+    const sync = () => {
+      const paused = v.paused || v.ended;
+      frame.classList.toggle('paused', paused);
+      btn.innerHTML = paused ? PLAY : PAUSE;
+    };
+    v.addEventListener('play', sync); v.addEventListener('pause', sync); v.addEventListener('ended', sync);
+    v.addEventListener('timeupdate', () => {
+      fill.style.width = (v.duration ? (100 * v.currentTime / v.duration) : 0) + '%';
+      tm.textContent = fmt(v.currentTime) + ' / ' + fmt(v.duration);
+    });
+    frame.addEventListener('click', () => toggle(v));
+    ctl.addEventListener('click', (e) => e.stopPropagation());
+    btn.addEventListener('click', () => toggle(v));
+    ctl.querySelector('.bar').addEventListener('click', (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      if (v.duration) v.currentTime = v.duration * Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    });
+    sync();
   });
+  let current = 0;
   function onSlide(index) {
+    current = index;
     slides.forEach((s, i) => {
       s.querySelectorAll('.vid video[data-src]').forEach((v) => {
-        if (i === index) {
-          if (!v.getAttribute('src')) v.setAttribute('src', v.dataset.src);
-          const p = v.play(); if (p && p.catch) p.catch(() => {});
-        } else if (!v.paused) { v.pause(); }
+        if (i === index) { v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); }
+        else if (!v.paused) v.pause();
       });
     });
   }
   deck.addEventListener('slidechange', (e) => onSlide(e.detail.index));
+  window.addEventListener('keydown', (e) => {
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k !== 'k' && k !== 'j' && k !== 'l') return;
+    const vs = [...slides[current].querySelectorAll('.vid video[data-src]')];
+    if (!vs.length) return;
+    e.preventDefault();
+    if (k === 'k') {
+      const anyPlaying = vs.some((v) => !v.paused && !v.ended);
+      vs.forEach((v) => { if (anyPlaying) v.pause(); else toggle(v); });
+    } else {
+      const d = k === 'j' ? -5 : 5;
+      vs.forEach((v) => { v.currentTime = Math.min(v.duration || 0, Math.max(0, v.currentTime + d)); });
+    }
+  });
 
   // Slides marked data-anim replay their animations each time they open.
   deck.addEventListener('slidechange', (e) => {

@@ -1,0 +1,52 @@
+name: stride
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.13.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  home_widget: ^0.10.0
+  # Pinned: path_provider_android 2.3.x reaches Android through JNI, and on an
+  # Android 10 phone (Redmi Note 7 Pro) that failed with "ClassNotFoundException:
+  # Landroid/content/Context;", so home_widget could not save any file.
+  # 2.2.23 is the last version using the platform channel.
+  path_provider_android: 2.2.23
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  home_widget_generator: ^0.4.0+1
+  home_widget_cli: ^0.4.0+1
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+
+  fonts:
+    - family: BarlowCondensed
+      fonts:
+        - asset: assets/fonts/BarlowCondensed-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/BarlowCondensed-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/BarlowCondensed-ExtraBold.ttf
+          weight: 800
+
+# App icon for both platforms: dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/app_icon.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  # Android adaptive icon: the same picture on the same near-black background,
+  # inset a little so circle or squircle masks don't cut it.
+  adaptive_icon_background: "#111419"
+  adaptive_icon_foreground: "assets/icon/app_icon.png"

@@ -18,11 +18,23 @@ class _TodayScreenState extends State<TodayScreen> {
   Today _today = const Today(steps: 0, goal: 10000, pastStreak: 0);
   StreamSubscription<Uri>? _widgetTaps;
 
+  /// False until the saved data is read; the screen stays empty until then,
+  /// so a quick tap can't be overwritten by the data arriving a moment later.
+  bool _loaded = false;
+
   @override
   void initState() {
     super.initState();
-    _restore();
-    // Listen: a tap on the widget opens the app, from cold start or while running.
+    _start();
+  }
+
+  Future<void> _start() async {
+    await _restore();
+    if (!mounted) return;
+    // Listen only after restoring, so a sheet opened by a widget tap shows the
+    // real numbers. A tap that launched the app is still delivered first.
+    // Both widgets open stride://today. Listen only once: widget taps arrive on
+    // one channel, and a second listener would silently replace this one.
     _widgetTaps = StrideHomeWidget.launchedFromWidget().listen(
       (_) => _showLogWalk(),
     );
@@ -48,6 +60,7 @@ class _TodayScreenState extends State<TodayScreen> {
         goal: goal,
         pastStreak: reached ? streak - 1 : streak,
       );
+      _loaded = true;
     });
   }
 
@@ -56,9 +69,15 @@ class _TodayScreenState extends State<TodayScreen> {
     await updateStrideWidget(next, fastForward: fastForward);
   }
 
-  void _showLogWalk() {
-    if (!mounted) return;
-    showModalBottomSheet<void>(
+  /// Whether the "Back from a walk?" sheet is on screen.
+  bool _sheetOpen = false;
+
+  /// Opens the sheet, unless it is already open: a second widget tap while
+  /// it's showing would otherwise stack a second sheet on top.
+  Future<void> _showLogWalk() async {
+    if (!mounted || _sheetOpen) return;
+    _sheetOpen = true;
+    await showModalBottomSheet<void>(
       context: context,
       backgroundColor: StrideColors.surface,
       builder: (context) => _LogWalkSheet(
@@ -69,10 +88,14 @@ class _TodayScreenState extends State<TodayScreen> {
         },
       ),
     );
+    // Closed: by a button, a swipe down or a tap outside.
+    _sheetOpen = false;
   }
 
   @override
   Widget build(BuildContext context) {
+    // A blank dark screen for the first instant, while the saved data loads.
+    if (!_loaded) return const Scaffold();
     final today = _today;
     return Scaffold(
       body: SafeArea(

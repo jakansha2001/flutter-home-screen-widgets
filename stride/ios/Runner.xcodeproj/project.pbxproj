@@ -22,6 +22,12 @@
 		7C123FE1025B82F85A554CAF /* Widget.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC56EC7C43FA23B9AE77FD36 /* Widget.swift */; };
 		6EB5BFE1CE3B9538AA6E6677 /* WidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = F7E338C405845B99916DF58E /* WidgetBundle.swift */; };
 		B50C22199C5782420AEE9EFF /* hw_font_icons_materialicons.otf in Resources */ = {isa = PBXBuildFile; fileRef = 354FB206ED8433215010C160 /* hw_font_icons_materialicons.otf */; };
+		5DB745E6AEB2C9018182F318 /* StreakHomeWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 54661B0B7DA95920190089B9 /* StreakHomeWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		F86D3325E62B3B76954D3C2F /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 77FDA7B207C35FCDF857E3C0 /* WidgetKit.framework */; };
+		5A29C01219FB29D56F598AEC /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9C0216E10F93FDCA9FBF554F /* SwiftUI.framework */; };
+		7287861A5AB1C9976CA028C4 /* Widget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D8BC0D3D63CB6D29B147419 /* Widget.swift */; };
+		652B061AAA582FD751956F6C /* WidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A58A901BD4886A3280305671 /* WidgetBundle.swift */; };
+		841030B2BCD7390D506C5794 /* hw_font_icons_materialicons.otf in Resources */ = {isa = PBXBuildFile; fileRef = 295236690E84EC5A83222F1F /* hw_font_icons_materialicons.otf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +44,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 6E76C5D94597A16CF36D0E5B;
 			remoteInfo = StrideHomeWidget;
+		};
+		608102E9CFA4CD729A7F9BAB /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C770CB72D87451030637B048;
+			remoteInfo = StreakHomeWidget;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -59,6 +72,17 @@
 			dstSubfolderSpec = 13;
 			files = (
 				7B5FBF053883D39E46C23D2B /* StrideHomeWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8A4A69E34B49D1929D145809 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5DB745E6AEB2C9018182F318 /* StreakHomeWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -92,6 +116,14 @@
 		F7E338C405845B99916DF58E /* WidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBundle.swift; sourceTree = "<group>"; };
 		3DCDE445AEF4BE60423A92E3 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		354FB206ED8433215010C160 /* hw_font_icons_materialicons.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = hw_font_icons_materialicons.otf; sourceTree = "<group>"; };
+		54661B0B7DA95920190089B9 /* StreakHomeWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StreakHomeWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		77FDA7B207C35FCDF857E3C0 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		9C0216E10F93FDCA9FBF554F /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		CFAEE30CC455E65D89171AA6 /* StreakHomeWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = StreakHomeWidget.entitlements; sourceTree = "<group>"; };
+		1D8BC0D3D63CB6D29B147419 /* Widget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Widget.swift; sourceTree = "<group>"; };
+		A58A901BD4886A3280305671 /* WidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetBundle.swift; sourceTree = "<group>"; };
+		4956FA26E2062C1FA5F6C770 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		295236690E84EC5A83222F1F /* hw_font_icons_materialicons.otf */ = {isa = PBXFileReference; lastKnownFileType = file; path = hw_font_icons_materialicons.otf; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -109,6 +141,15 @@
 			files = (
 				C1CC2DF96E69646AC83281F7 /* SwiftUI.framework in Frameworks */,
 				09A2EB3A83521CD5003E51B0 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6CDC6B2FD8ACD9FA446F0B71 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5A29C01219FB29D56F598AEC /* SwiftUI.framework in Frameworks */,
+				F86D3325E62B3B76954D3C2F /* WidgetKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,6 +186,8 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				DB39E297EC6AC5D27D8E04C5 /* StrideHomeWidget.entitlements */,
 				060542FF01367440AC562A01 /* StrideHomeWidget */,
+				CFAEE30CC455E65D89171AA6 /* StreakHomeWidget.entitlements */,
+				4B82FB94CF4864FF4C2C1A3A /* StreakHomeWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -154,6 +197,7 @@
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
 				944CCA348B9C81D32F8DC3D6 /* StrideHomeWidget.appex */,
+				54661B0B7DA95920190089B9 /* StreakHomeWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -183,6 +227,17 @@
 				354FB206ED8433215010C160 /* hw_font_icons_materialicons.otf */,
 			);
 			path = StrideHomeWidget;
+			sourceTree = "<group>";
+		};
+		4B82FB94CF4864FF4C2C1A3A /* StreakHomeWidget */ = {
+			isa = PBXGroup;
+			children = (
+				1D8BC0D3D63CB6D29B147419 /* Widget.swift */,
+				A58A901BD4886A3280305671 /* WidgetBundle.swift */,
+				4956FA26E2062C1FA5F6C770 /* Info.plist */,
+				295236690E84EC5A83222F1F /* hw_font_icons_materialicons.otf */,
+			);
+			path = StreakHomeWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -215,12 +270,14 @@
 				97C146EC1CF9000F007C117D /* Resources */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				CF991ACCB2EC3F796A9B7826 /* Embed Foundation Extensions */,
+				8A4A69E34B49D1929D145809 /* Embed Foundation Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				9C69C6859D0B94F6A3A37153 /* PBXTargetDependency */,
+				7EC14D664EC1DCD995B048A0 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			packageProductDependencies = (
@@ -245,6 +302,23 @@
 			name = StrideHomeWidget;
 			productName = StrideHomeWidget;
 			productReference = 944CCA348B9C81D32F8DC3D6 /* StrideHomeWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		C770CB72D87451030637B048 /* StreakHomeWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4EEC7333F6D49844694515C5 /* Build configuration list for PBXNativeTarget "StreakHomeWidget" */;
+			buildPhases = (
+				8EF377C46CEDB5433E740FFA /* Sources */,
+				6CDC6B2FD8ACD9FA446F0B71 /* Frameworks */,
+				73E54D6957386766622FEF4B /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = StreakHomeWidget;
+			productName = StreakHomeWidget;
+			productReference = 54661B0B7DA95920190089B9 /* StreakHomeWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -286,6 +360,7 @@
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
 				6E76C5D94597A16CF36D0E5B /* StrideHomeWidget */,
+				C770CB72D87451030637B048 /* StreakHomeWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -314,6 +389,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				B50C22199C5782420AEE9EFF /* hw_font_icons_materialicons.otf in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		73E54D6957386766622FEF4B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				841030B2BCD7390D506C5794 /* hw_font_icons_materialicons.otf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -381,6 +464,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		8EF377C46CEDB5433E740FFA /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7287861A5AB1C9976CA028C4 /* Widget.swift in Sources */,
+				652B061AAA582FD751956F6C /* WidgetBundle.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -393,6 +485,11 @@
 			isa = PBXTargetDependency;
 			target = 6E76C5D94597A16CF36D0E5B /* StrideHomeWidget */;
 			targetProxy = 6C7E7E8676AAC7D9CDCA42D4 /* PBXContainerItemProxy */;
+		};
+		7EC14D664EC1DCD995B048A0 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C770CB72D87451030637B048 /* StreakHomeWidget */;
+			targetProxy = 608102E9CFA4CD729A7F9BAB /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -780,6 +877,87 @@
 			};
 			name = Profile;
 		};
+		86D0B8A8901C123F10FF3C02 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 68EC8D0B1D2F26069F27AD05 /* HomeWidget.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = StreakHomeWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 36KXQWK4SU;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				INFOPLIST_FILE = StreakHomeWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StreakHomeWidget;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.akanshajain.stride.StreakHomeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F6FD767626AE58BDE3BEA880 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 68EC8D0B1D2F26069F27AD05 /* HomeWidget.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = StreakHomeWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 36KXQWK4SU;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				INFOPLIST_FILE = StreakHomeWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StreakHomeWidget;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.akanshajain.stride.StreakHomeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		51AC0DAABBC874ED3019A448 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 68EC8D0B1D2F26069F27AD05 /* HomeWidget.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = StreakHomeWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "$(FLUTTER_BUILD_NUMBER)";
+				DEVELOPMENT_TEAM = 36KXQWK4SU;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				INFOPLIST_FILE = StreakHomeWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StreakHomeWidget;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = "$(FLUTTER_BUILD_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = dev.akanshajain.stride.StreakHomeWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Profile;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -819,6 +997,16 @@
 				CF858EBBB4EA77807931F7E9 /* Debug */,
 				942457D5A4A1623221A908B3 /* Release */,
 				128F68B1891AEDA21D4F025B /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4EEC7333F6D49844694515C5 /* Build configuration list for PBXNativeTarget "StreakHomeWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				86D0B8A8901C123F10FF3C02 /* Debug */,
+				F6FD767626AE58BDE3BEA880 /* Release */,
+				51AC0DAABBC874ED3019A448 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

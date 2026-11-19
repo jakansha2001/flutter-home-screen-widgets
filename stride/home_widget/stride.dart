@@ -96,6 +96,10 @@ const _blockOff = HWSizedBox(
   description: 'Your steps today and your streak.',
   widgetUrl: 'stride://today',
   android: HomeWidgetAndroidConfiguration(
+    // Android 12+ reads the target cells; older Android (like Android 10)
+    // only reads minWidth/minHeight: 4 x 2 cells = 250 x 110 dp.
+    minWidth: 250,
+    minHeight: 110,
     targetCellWidth: 4,
     targetCellHeight: 2,
     backgroundColor: _background,

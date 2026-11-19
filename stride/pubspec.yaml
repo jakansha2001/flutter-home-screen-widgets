@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   home_widget: ^0.10.0
+  # Pinned: path_provider_android 2.3.x reaches Android through JNI, and on an
+  # Android 10 phone (Redmi Note 7 Pro) that failed with "ClassNotFoundException:
+  # Landroid/content/Context;", so home_widget could not save any file.
+  # 2.2.23 is the last version using the platform channel.
+  path_provider_android: 2.2.23
 
 dev_dependencies:
   flutter_test:

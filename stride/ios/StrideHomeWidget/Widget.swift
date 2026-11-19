@@ -5,6 +5,7 @@
 // App Group ID used here: StrideHomeWidgetFlavor.appGroupId
 
 import CoreText
+import ImageIO
 import SwiftUI
 import WidgetKit
 
@@ -65,75 +66,88 @@ struct StrideHomeWidgetEntryView: View {
   var entry: Provider.Entry
 
   var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: 0) {
-                Text("TODAY")
-                    .font(hwFont("BarlowCondensed", 600, false, 14)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
-                Spacer(minLength: 0)
-                if entry.data.goalReached == true {
-                    HStack(alignment: .center, spacing: 0) {
-                        Text(String(UnicodeScalar(UInt32(0xE392))!))
-                            .font(hwBundledFont("hw_font_icons_materialicons", size: 20))
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(Color(red: 1.0, green: 0.47843137254901963, blue: 0.10196078431372549, opacity: 1.0))
-                            .accessibilityHidden(true)
-                        Text(hwFormatDecimal(NSNumber(value: entry.data.streak ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
-                            .font(hwFont("BarlowCondensed", 800, false, 20)).foregroundColor(Color(red: 1.0, green: 0.47843137254901963, blue: 0.10196078431372549, opacity: 1.0))
-                        .padding(.leading, 2.0)
-                    }
-                } else {
-                    HStack(alignment: .center, spacing: 0) {
-                        Text(String(UnicodeScalar(UInt32(0xE392))!))
-                            .font(hwBundledFont("hw_font_icons_materialicons", size: 20))
-                            .frame(width: 20, height: 20)
-                            .foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
-                            .accessibilityHidden(true)
-                        Text(hwFormatDecimal(NSNumber(value: entry.data.streak ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
-                            .font(hwFont("BarlowCondensed", 800, false, 20)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
-                        .padding(.leading, 2.0)
-                    }
-                }
-            }
-            Spacer(minLength: 0)
-            HStack(alignment: .firstTextBaseline, spacing: 0) {
-                if entry.data.goalReached == true {
-                    Text(hwFormatDecimal(NSNumber(value: entry.data.steps ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
-                        .font(hwFont("BarlowCondensed", 800, false, 44)).foregroundColor(Color(red: 0.7764705882352941, green: 1.0, blue: 0.23921568627450981, opacity: 1.0))
-                } else {
-                    Text(hwFormatDecimal(NSNumber(value: entry.data.steps ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
-                        .font(hwFont("BarlowCondensed", 800, false, 44)).foregroundColor(Color(red: 0.9607843137254902, green: 0.9686274509803922, blue: 0.9803921568627451, opacity: 1.0))
-                }
-                Text("/")
-                    .font(hwFont("BarlowCondensed", 400, false, 18)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
-                .padding(.leading, 6.0)
-                Text(hwFormatDecimal(NSNumber(value: entry.data.goal ?? 10000), minFraction: nil, maxFraction: nil, grouping: true))
-                    .font(hwFont("BarlowCondensed", 400, false, 18)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
-                .padding(.leading, 6.0)
-            }
-            Spacer(minLength: 0)
-            HStack(alignment: .center, spacing: 0) {
-                ForEach(Array((entry.data.blocks ?? []).prefix(10).enumerated()), id: \.offset) { hwIndex, hwItem in
-                    Group {
-                        if hwItem.filled == true {
-                            Color.clear
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .frame(width: 22.0, height: 8.0, alignment: .topLeading)
-                            .background(RoundedRectangle(cornerRadius: 4.0).fill(Color(red: 0.7764705882352941, green: 1.0, blue: 0.23921568627450981, opacity: 1.0)))
-                        } else {
-                            Color.clear
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .frame(width: 22.0, height: 8.0, alignment: .topLeading)
-                            .background(RoundedRectangle(cornerRadius: 4.0).fill(Color(red: 0.16470588235294117, green: 0.1843137254901961, blue: 0.21568627450980393, opacity: 1.0)))
+        HStack(alignment: .center, spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(alignment: .center, spacing: 0) {
+                    Text("TODAY")
+                        .font(hwFont("BarlowCondensed", 600, false, 14)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
+                    Spacer(minLength: 0)
+                    if entry.data.goalReached == true {
+                        HStack(alignment: .center, spacing: 0) {
+                            Text(String(UnicodeScalar(UInt32(0xE392))!))
+                                .font(hwBundledFont("hw_font_icons_materialicons", size: 20))
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(Color(red: 1.0, green: 0.47843137254901963, blue: 0.10196078431372549, opacity: 1.0))
+                                .accessibilityHidden(true)
+                            Text(hwFormatDecimal(NSNumber(value: entry.data.streak ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
+                                .font(hwFont("BarlowCondensed", 800, false, 20)).foregroundColor(Color(red: 1.0, green: 0.47843137254901963, blue: 0.10196078431372549, opacity: 1.0))
+                            .padding(.leading, 2.0)
+                        }
+                    } else {
+                        HStack(alignment: .center, spacing: 0) {
+                            Text(String(UnicodeScalar(UInt32(0xE392))!))
+                                .font(hwBundledFont("hw_font_icons_materialicons", size: 20))
+                                .frame(width: 20, height: 20)
+                                .foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
+                                .accessibilityHidden(true)
+                            Text(hwFormatDecimal(NSNumber(value: entry.data.streak ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
+                                .font(hwFont("BarlowCondensed", 800, false, 20)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
+                            .padding(.leading, 2.0)
                         }
                     }
-                    .padding(.leading, hwIndex > 0 ? 5.0 : 0)
+                }
+                Spacer(minLength: 0)
+                HStack(alignment: .firstTextBaseline, spacing: 0) {
+                    if entry.data.goalReached == true {
+                        Text(hwFormatDecimal(NSNumber(value: entry.data.steps ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
+                            .font(hwFont("BarlowCondensed", 800, false, 40)).foregroundColor(Color(red: 0.7764705882352941, green: 1.0, blue: 0.23921568627450981, opacity: 1.0))
+                    } else {
+                        Text(hwFormatDecimal(NSNumber(value: entry.data.steps ?? 0), minFraction: nil, maxFraction: nil, grouping: true))
+                            .font(hwFont("BarlowCondensed", 800, false, 40)).foregroundColor(Color(red: 0.9607843137254902, green: 0.9686274509803922, blue: 0.9803921568627451, opacity: 1.0))
+                    }
+                    Text("/")
+                        .font(hwFont("BarlowCondensed", 400, false, 18)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
+                    .padding(.leading, 6.0)
+                    Text(hwFormatDecimal(NSNumber(value: entry.data.goal ?? 10000), minFraction: nil, maxFraction: nil, grouping: true))
+                        .font(hwFont("BarlowCondensed", 400, false, 18)).foregroundColor(Color(red: 0.5411764705882353, green: 0.5647058823529412, blue: 0.6, opacity: 1.0))
+                    .padding(.leading, 6.0)
+                }
+                Spacer(minLength: 0)
+                HStack(alignment: .center, spacing: 0) {
+                    ForEach(Array((entry.data.blocks ?? []).prefix(10).enumerated()), id: \.offset) { hwIndex, hwItem in
+                        Group {
+                            if hwItem.filled == true {
+                                Color.clear
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(width: 13.0, height: 8.0, alignment: .topLeading)
+                                .background(RoundedRectangle(cornerRadius: 4.0).fill(Color(red: 0.7764705882352941, green: 1.0, blue: 0.23921568627450981, opacity: 1.0)))
+                            } else {
+                                Color.clear
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .frame(width: 13.0, height: 8.0, alignment: .topLeading)
+                                .background(RoundedRectangle(cornerRadius: 4.0).fill(Color(red: 0.16470588235294117, green: 0.1843137254901961, blue: 0.21568627450980393, opacity: 1.0)))
+                            }
+                        }
+                        .padding(.leading, hwIndex > 0 ? 4.0 : 0)
+                    }
+                }
+                Spacer(minLength: 0)
+                Text(entry.data.message ?? "")
+                    .font(hwFont("BarlowCondensed", 500, false, 15)).foregroundColor(Color(red: 0.9607843137254902, green: 0.9686274509803922, blue: 0.9803921568627451, opacity: 1.0))
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            Group {
+                if let path = entry.data.mascot, let uiImage = hwDecodeImage(path, 120.0, 120.0) {
+                    Image(uiImage: uiImage)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 120.0, height: 120.0)
+                        .clipped()
+                        .accessibilityLabel("Dash")
                 }
             }
-            Spacer(minLength: 0)
-            Text(entry.data.message ?? "")
-                .font(hwFont("BarlowCondensed", 500, false, 15)).foregroundColor(Color(red: 0.9607843137254902, green: 0.9686274509803922, blue: 0.9803921568627451, opacity: 1.0))
+            .padding(.leading, 10.0)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     .applyContainerBackground(Color(red: 0.06666666666666667, green: 0.0784313725490196, blue: 0.09411764705882353, opacity: 1.0))
     .widgetURL(URL(string: "stride://today?homeWidget"))
   }
@@ -169,6 +183,7 @@ struct StrideData {
   let steps: Int?
   let goal: Int?
   let message: String?
+  let mascot: String?
   let blocks: [StrideBlocksItem]?
 
   static let paramPrefix = "home_widget.Stride"
@@ -185,6 +200,7 @@ struct StrideData {
       steps: (defaults?.object(forKey: "\(paramPrefix).steps") as? Int ?? 0),
       goal: (defaults?.object(forKey: "\(paramPrefix).goal") as? Int ?? 10000),
       message: (timedValues["message"] as? String) ?? "Lace up. Every step counts.",
+      mascot: timedValues["mascot"] as? String,
       blocks: StrideBlocksItem.fromPath(defaults?.string(forKey: "\(paramPrefix).blocks")),
     )
   }
@@ -201,6 +217,7 @@ struct StrideData {
       steps: (defaults?.object(forKey: "\(paramPrefix).steps") as? Int ?? 6240),
       goal: (defaults?.object(forKey: "\(paramPrefix).goal") as? Int ?? 10000),
       message: (timedValues["message"] as? String) ?? "A short walk gets you there",
+      mascot: (timedValues["mascot"] as? String) ?? "assets/images/dash_walk.png",
       blocks: StrideBlocksItem.fromPath(defaults?.string(forKey: "\(paramPrefix).blocks")) ?? StrideBlocksItem.previewItems,
     )
   }
@@ -274,6 +291,39 @@ struct StrideBlocksItem {
   }
 }
 
+
+func hwDecodeImage(_ path: String, _ widthPt: Double?, _ heightPt: Double?) -> UIImage? {
+  func assetFile(_ asset: String) -> String? {
+    let appBundleURL = Bundle.main.bundleURL
+      .deletingLastPathComponent()
+      .deletingLastPathComponent()
+    let url = appBundleURL
+      .appendingPathComponent("Frameworks/App.framework/flutter_assets")
+      .appendingPathComponent(asset)
+    return FileManager.default.fileExists(atPath: url.path) ? url.path : nil
+  }
+
+  guard let file = path.hasPrefix("/") ? path : assetFile(path),
+    let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: file) as CFURL, nil)
+  else { return nil }
+  let displayScale = UITraitCollection.current.displayScale
+  let scale = displayScale > 0 ? displayScale : 3
+  let fallback = CGFloat(1536)
+  let targetWidth = widthPt.map { CGFloat($0) * scale } ?? fallback
+  let targetHeight = heightPt.map { CGFloat($0) * scale } ?? fallback
+  let maxPixelSize = Int(max(targetWidth, targetHeight).rounded())
+  guard maxPixelSize > 0 else { return nil }
+  let options: [CFString: Any] = [
+    kCGImageSourceCreateThumbnailFromImageAlways: true,
+    kCGImageSourceCreateThumbnailWithTransform: true,
+    kCGImageSourceShouldCacheImmediately: true,
+    kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+  ]
+  guard
+    let thumbnail = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary)
+  else { return nil }
+  return UIImage(cgImage: thumbnail, scale: scale, orientation: .up)
+}
 
 private final class HWFontCache: @unchecked Sendable {
   static let shared = HWFontCache()

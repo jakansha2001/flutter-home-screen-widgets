@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:home_widget/home_widget.dart';
 
 class StrideHomeWidget {
@@ -15,6 +16,12 @@ class StrideHomeWidget {
 
   static const String _$paramPrefix = 'home_widget.Stride';
 
+  /// Writes every value handed to it, and leaves out what it was not given.
+  ///
+  /// A picture this widget itself wrote, handed back by [getData] and since
+  /// removed from disk, is saved as no picture rather than failing the call:
+  /// a nested, timed or per-item one is cleared, a top-level one keeps the
+  /// path it had.
   static Future<void> saveData({
     bool? goalReached,
     int? streak,
@@ -22,8 +29,13 @@ class StrideHomeWidget {
     int? goal,
     List<StrideBlocksItem>? blocks,
     Map<DateTime, StrideTimedData>? timedData,
-  }) {
-    return Future.wait([
+  }) async {
+    final _timedImages_mascot = {
+      if (timedData != null)
+        for (final MapEntry(key: _time, value: _entry) in timedData.entries)
+          _time: await _$readImage(_entry.mascot),
+    };
+    await Future.wait([
       if (goalReached != null) HomeWidget.saveWidgetData<bool>('${_$paramPrefix}.goalReached', goalReached, appGroupId: _$appGroupId),
       if (streak != null) HomeWidget.saveWidgetData<int>('${_$paramPrefix}.streak', streak, appGroupId: _$appGroupId),
       if (steps != null) HomeWidget.saveWidgetData<int>('${_$paramPrefix}.steps', steps, appGroupId: _$appGroupId),
@@ -33,8 +45,10 @@ class StrideHomeWidget {
       }(),
       if (timedData != null) () async {
         final _timedTimes = timedData.keys.toList()..sort();
+        final _storedTimes = await _$storedTimedKeys();
         if (_timedTimes.isEmpty) {
           await HomeWidget.saveWidgetData('${_$paramPrefix}.timedData', null, appGroupId: _$appGroupId);
+          await _$deleteTimedImages(_storedTimes);
           try {
             await HomeWidget.cancelScheduledWidgetUpdates(androidName: 'StrideHomeWidgetReceiver');
           } catch (error, stackTrace) {
@@ -50,11 +64,21 @@ class StrideHomeWidget {
           }
           return;
         }
-        final _timedJson = <String, dynamic>{
-          for (final _time in _timedTimes)
-            _time.toUtc().millisecondsSinceEpoch.toString(): timedData[_time]!.toJson(),
-        };
+        final _timedJson = <String, dynamic>{};
+        for (final _time in _timedTimes) {
+          final _millis = _time.toUtc().millisecondsSinceEpoch;
+          final _entry = timedData[_time]!;
+          final _values = _entry.toJson();
+          final _timedImage_mascot = _timedImages_mascot[_time];
+          if (_timedImage_mascot != null) {
+            _values['mascot'] = await _$saveImage('${_$paramPrefix}.timedData.mascot.$_millis', _timedImage_mascot);
+          } else if (_storedTimes.contains(_millis)) {
+            await HomeWidget.saveWidgetData<String>('${_$paramPrefix}.timedData.mascot.$_millis', null, appGroupId: _$appGroupId);
+          }
+          _timedJson[_millis.toString()] = _values;
+        }
         await HomeWidget.saveFile('${_$paramPrefix}.timedData', Uint8List.fromList(utf8.encode(jsonEncode(_timedJson))), extension: 'json', appGroupId: _$appGroupId);
+        await _$deleteTimedImages(_storedTimes.where((_millis) => !_timedJson.containsKey(_millis.toString())));
         try {
           await HomeWidget.scheduleWidgetUpdates(_timedTimes, androidName: 'StrideHomeWidgetReceiver');
         } catch (error, stackTrace) {
@@ -87,7 +111,9 @@ class StrideHomeWidget {
       if (goal) HomeWidget.saveWidgetData('${_$paramPrefix}.goal', null, appGroupId: _$appGroupId),
       if (blocks) HomeWidget.saveWidgetData('${_$paramPrefix}.blocks', null, appGroupId: _$appGroupId),
       if (timedData) () async {
+        final _storedTimes = await _$storedTimedKeys();
         await HomeWidget.saveWidgetData('${_$paramPrefix}.timedData', null, appGroupId: _$appGroupId);
+        await _$deleteTimedImages(_storedTimes);
         try {
           await HomeWidget.cancelScheduledWidgetUpdates(androidName: 'StrideHomeWidgetReceiver');
         } catch (error, stackTrace) {
@@ -299,19 +325,69 @@ class StrideHomeWidget {
     final text = uri.toString();
     return uri.scheme.toLowerCase() + text.substring(uri.scheme.length);
   }
+
+  static Future<ImageProvider?> _$readImage(ImageProvider? image) async {
+    if (image is! FileImage) return image;
+    final path = image.file.path;
+    final name = path.substring(path.lastIndexOf('/') + 1);
+    if (!name.startsWith('${_$paramPrefix}.') || !name.endsWith('.png')) {
+      return image;
+    }
+    try {
+      return MemoryImage(await image.file.readAsBytes());
+    } on FileSystemException {
+      return null;
+    }
+  }
+
+  static Future<String> _$saveImage(String key, ImageProvider image) async {
+    final path = await HomeWidget.saveImage(key, image, appGroupId: _$appGroupId);
+    await FileImage(File(path)).evict();
+    return path;
+  }
+
+  static Future<List<int>> _$storedTimedKeys() async {
+    final path = await HomeWidget.getWidgetData<String>('${_$paramPrefix}.timedData', appGroupId: _$appGroupId);
+    if (path == null) return const [];
+    try {
+      final decoded = jsonDecode(await File(path).readAsString());
+      if (decoded is! Map<String, dynamic>) return const [];
+      return [
+        for (final key in decoded.keys)
+          if (int.tryParse(key) case final millis?) millis,
+      ];
+    } on Exception {
+      return const [];
+    }
+  }
+
+  static Future<void> _$deleteTimedImages(Iterable<int> times) async {
+    await Future.wait([
+      for (final _millis in times)
+        for (final _key in const ['mascot'])
+          HomeWidget.saveWidgetData<String>('${_$paramPrefix}.timedData.$_key.$_millis', null, appGroupId: _$appGroupId),
+    ]);
+  }
 }
 
 class StrideTimedData {
   final String? message;
+  /// The image shown from this entry's timestamp on.
+  ///
+  /// `saveData` writes it to its own PNG and stores that path in the entry;
+  /// `getData` hands it back as a `FileImage` of that PNG.
+  final ImageProvider? mascot;
 
   const StrideTimedData({
     this.message,
+    this.mascot,
   });
 
   factory StrideTimedData.fromJson(Map<String, dynamic>? json) {
     json ??= const {};
     return StrideTimedData(
       message: _readString(json['message']) ?? 'Lace up. Every step counts.',
+      mascot: _readFileImage(json['mascot']),
     );
   }
 
@@ -345,3 +421,8 @@ class StrideBlocksItem {
 
 String? _readString(Object? value) => value is String ? value : null;
 bool? _readBool(Object? value) => value is bool ? value : null;
+ImageProvider? _readFileImage(Object? value) {
+  if (value is! String || value.isEmpty) return null;
+  final file = File(value);
+  return file.existsSync() ? FileImage(file) : null;
+}

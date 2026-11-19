@@ -21,13 +21,17 @@ const _message = HWTimedData(
     previewValue: 'A short walk gets you there',
   ),
 );
+// Dash changes with progress, and on a schedule (goal reached -> resting).
+const _mascot = HWTimedData(
+  HWImageData('mascot', previewAsset: 'assets/images/dash_walk.png'),
+);
 
 const _font = 'BarlowCondensed';
 
 const _stepsStyle = HWTextStyle(
   fontFamily: _font,
   fontWeight: HWFontWeight.w800,
-  fontSize: 44,
+  fontSize: 40,
 );
 const _stepsWhite = HWText(
   _steps,
@@ -47,19 +51,25 @@ const _streakOn = HWRow(
   spacing: 2,
   children: [
     HWIcon.fixed(Icons.local_fire_department, size: 20, color: _orange),
-    HWText(_streak, style: HWTextStyle(baseStyle: _streakStyle, color: _orange)),
+    HWText(
+      _streak,
+      style: HWTextStyle(baseStyle: _streakStyle, color: _orange),
+    ),
   ],
 );
 const _streakOff = HWRow(
   spacing: 2,
   children: [
     HWIcon.fixed(Icons.local_fire_department, size: 20, color: _muted),
-    HWText(_streak, style: HWTextStyle(baseStyle: _streakStyle, color: _muted)),
+    HWText(
+      _streak,
+      style: HWTextStyle(baseStyle: _streakStyle, color: _muted),
+    ),
   ],
 );
 
 const _blockOn = HWSizedBox(
-  width: 22,
+  width: 13,
   height: 8,
   child: HWDecoratedBox(
     decoration: HWBoxDecoration(
@@ -70,7 +80,7 @@ const _blockOn = HWSizedBox(
   ),
 );
 const _blockOff = HWSizedBox(
-  width: 22,
+  width: 13,
   height: 8,
   child: HWDecoratedBox(
     decoration: HWBoxDecoration(
@@ -95,80 +105,102 @@ const _blockOff = HWSizedBox(
     supportedFamilies: [HWWidgetFamily.systemMedium],
     backgroundColor: _background,
   ),
-  widget: HWSizedBox.expand(
-    child: HWColumn(
-      crossAxisAlignment: HWCrossAxisAlignment.start,
-      mainAxisAlignment: HWMainAxisAlignment.spaceBetween,
-      children: [
-        // Top: label on the left, streak on the right.
-        HWRow(
+  widget: HWRow(
+    spacing: 10,
+    children: [
+      // Numbers on the left, taking the room Dash leaves.
+      HWSizedBox.expand(
+        child: HWColumn(
+          crossAxisAlignment: HWCrossAxisAlignment.start,
           mainAxisAlignment: HWMainAxisAlignment.spaceBetween,
           children: [
-            HWText.fixed(
-              'TODAY',
-              style: HWTextStyle(
-                fontFamily: _font,
-                fontWeight: HWFontWeight.w600,
-                fontSize: 14,
-                color: _muted,
-              ),
-            ),
-            HWBoolConditional(
-              data: _goalReached,
-              whenTrue: _streakOn,
-              whenFalse: _streakOff,
-            ),
-          ],
-        ),
-        // Steps: turns lime once the goal is reached.
-        HWRow(
-          crossAxisAlignment: HWCrossAxisAlignment.baseline,
-          spacing: 6,
-          children: [
-            HWBoolConditional(
-              data: _goalReached,
-              whenTrue: _stepsLime,
-              whenFalse: _stepsWhite,
-            ),
-            HWText.fixed(
-              '/',
-              style: HWTextStyle(fontFamily: _font, fontSize: 18, color: _muted),
-            ),
-            HWText(
-              _goal,
-              style: HWTextStyle(fontFamily: _font, fontSize: 18, color: _muted),
-            ),
-          ],
-        ),
-        // Progress: ten blocks, one per tenth of the goal.
-        HWRow.builder(
-          'blocks',
-          maxItems: 10,
-          spacing: 5,
-          item: HWBoolConditional(
-            data: HWItemData(
-              HWBool('filled', defaultValue: false),
-              previewValues: [
-                true, true, true, true, true, true, //
-                false, false, false, false,
+            // Top: label on the left, streak on the right.
+            HWRow(
+              mainAxisAlignment: HWMainAxisAlignment.spaceBetween,
+              children: [
+                HWText.fixed(
+                  'TODAY',
+                  style: HWTextStyle(
+                    fontFamily: _font,
+                    fontWeight: HWFontWeight.w600,
+                    fontSize: 14,
+                    color: _muted,
+                  ),
+                ),
+                HWBoolConditional(
+                  data: _goalReached,
+                  whenTrue: _streakOn,
+                  whenFalse: _streakOff,
+                ),
               ],
             ),
-            whenTrue: _blockOn,
-            whenFalse: _blockOff,
-          ),
+            // Steps: turns lime once the goal is reached.
+            HWRow(
+              crossAxisAlignment: HWCrossAxisAlignment.baseline,
+              spacing: 6,
+              children: [
+                HWBoolConditional(
+                  data: _goalReached,
+                  whenTrue: _stepsLime,
+                  whenFalse: _stepsWhite,
+                ),
+                HWText.fixed(
+                  '/',
+                  style: HWTextStyle(
+                    fontFamily: _font,
+                    fontSize: 18,
+                    color: _muted,
+                  ),
+                ),
+                HWText(
+                  _goal,
+                  style: HWTextStyle(
+                    fontFamily: _font,
+                    fontSize: 18,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
+            // Progress: ten blocks, one per tenth of the goal.
+            HWRow.builder(
+              'blocks',
+              maxItems: 10,
+              spacing: 4,
+              item: HWBoolConditional(
+                data: HWItemData(
+                  HWBool('filled', defaultValue: false),
+                  previewValues: [
+                    true, true, true, true, true, true, //
+                    false, false, false, false,
+                  ],
+                ),
+                whenTrue: _blockOn,
+                whenFalse: _blockOff,
+              ),
+            ),
+            // A nudge that changes through the day on its own.
+            HWText(
+              _message,
+              style: HWTextStyle(
+                fontFamily: _font,
+                fontWeight: HWFontWeight.w500,
+                fontSize: 15,
+                color: _white,
+              ),
+            ),
+          ],
         ),
-        // A nudge that changes through the day on its own.
-        HWText(
-          _message,
-          style: HWTextStyle(
-            fontFamily: _font,
-            fontWeight: HWFontWeight.w500,
-            fontSize: 15,
-            color: _white,
-          ),
-        ),
-      ],
-    ),
+      ),
+      // Dash on the right.
+      HWImage(
+        _mascot,
+        width: 120,
+        height: 120,
+        fit: HWImageFit.cover,
+        semanticLabel: 'Dash',
+      ),
+    ],
   ),
 )
 class Stride {}

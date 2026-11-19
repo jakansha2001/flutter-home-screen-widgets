@@ -23,7 +23,9 @@ class _TodayScreenState extends State<TodayScreen> {
     super.initState();
     _restore();
     // Listen: a tap on the widget opens the app, from cold start or while running.
-    _widgetTaps = StrideHomeWidget.launchedFromWidget().listen((_) => _showLogWalk());
+    _widgetTaps = StrideHomeWidget.launchedFromWidget().listen(
+      (_) => _showLogWalk(),
+    );
   }
 
   @override
@@ -77,17 +79,40 @@ class _TodayScreenState extends State<TodayScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
           children: [
-            const Text(
-              'STRIDE',
-              style: TextStyle(
-                fontFamily: numbers,
-                fontWeight: FontWeight.w800,
-                fontSize: 18,
-                letterSpacing: 3,
-                color: StrideColors.muted,
-              ),
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'STRIDE',
+                        style: TextStyle(
+                          fontFamily: numbers,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 48,
+                          height: 1,
+                          letterSpacing: 2,
+                          color: StrideColors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      _Label("TODAY'S WALK"),
+                    ],
+                  ),
+                ),
+                // The same Dash the widget shows.
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Image(
+                    image: dashImage(today.dash),
+                    width: 120,
+                    height: 120,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
             _StepsHeadline(today: today),
             const SizedBox(height: 20),
             _Blocks(filled: today.filledBlocks),
@@ -109,14 +134,18 @@ class _TodayScreenState extends State<TodayScreen> {
               ],
               selected: {today.goal},
               showSelectedIcon: false,
-              onSelectionChanged: (goal) => _update(today.copyWith(goal: goal.first)),
+              onSelectionChanged: (goal) =>
+                  _update(today.copyWith(goal: goal.first)),
             ),
             const SizedBox(height: 40),
             _DemoControls(
               onNewDay: () => _update(today.startNewDay()),
+              onRemoveSteps: () => _update(today.addSteps(-1000)),
               onFastForward: () => _update(today, fastForward: true),
               onStreakChange: (delta) => _update(
-                today.copyWith(pastStreak: (today.pastStreak + delta).clamp(0, 999)),
+                today.copyWith(
+                  pastStreak: (today.pastStreak + delta).clamp(0, 999),
+                ),
               ),
             ),
           ],
@@ -244,11 +273,13 @@ class _Label extends StatelessWidget {
 class _DemoControls extends StatelessWidget {
   const _DemoControls({
     required this.onNewDay,
+    required this.onRemoveSteps,
     required this.onFastForward,
     required this.onStreakChange,
   });
 
   final VoidCallback onNewDay;
+  final VoidCallback onRemoveSteps;
   final VoidCallback onFastForward;
   final ValueChanged<int> onStreakChange;
 
@@ -267,26 +298,58 @@ class _DemoControls extends StatelessWidget {
           const SizedBox(height: 8),
           Wrap(
             spacing: 8,
-            runSpacing: 4,
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               OutlinedButton(onPressed: onNewDay, child: const Text('New day')),
               OutlinedButton(
+                onPressed: onRemoveSteps,
+                child: const Text('−1,000 steps'),
+              ),
+              OutlinedButton(
                 onPressed: onFastForward,
                 child: const Text('Nudges every 30 s'),
               ),
-              IconButton(
-                onPressed: () => onStreakChange(-1),
-                icon: const Icon(Icons.remove),
-                tooltip: 'Streak −1',
-              ),
-              const Text('streak', style: TextStyle(color: StrideColors.muted)),
-              IconButton(
-                onPressed: () => onStreakChange(1),
-                icon: const Icon(Icons.add),
-                tooltip: 'Streak +1',
-              ),
+              _StreakStepper(onChange: onStreakChange),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "−  streak  +" in one pill, the same height and outline as the other buttons.
+class _StreakStepper extends StatelessWidget {
+  const _StreakStepper({required this.onChange});
+
+  final ValueChanged<int> onChange;
+
+  @override
+  Widget build(BuildContext context) {
+    final outline = Theme.of(context).colorScheme.outline;
+    return Container(
+      height: 40,
+      decoration: ShapeDecoration(
+        shape: StadiumBorder(side: BorderSide(color: outline)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: () => onChange(-1),
+            icon: const Icon(Icons.remove, size: 18),
+            color: StrideColors.lime,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Streak −1',
+          ),
+          const Text('streak', style: TextStyle(color: StrideColors.lime)),
+          IconButton(
+            onPressed: () => onChange(1),
+            icon: const Icon(Icons.add, size: 18),
+            color: StrideColors.lime,
+            visualDensity: VisualDensity.compact,
+            tooltip: 'Streak +1',
           ),
         ],
       ),

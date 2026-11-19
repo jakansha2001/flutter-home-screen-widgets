@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_widget_stride_label">Stride</string>
+    <string name="home_widget_stride_description">Your steps today and your streak.</string>
+</resources>
